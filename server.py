@@ -114,6 +114,22 @@ def create_student(student: Student) -> dict:
     logger.info(f'Student was added: id={new_id}')
     return {'message': 'Student was added'}
 
+@app.delete('/students/{id}')
+def delete_student(id: int):
+    students = load_students()
+
+    for ids in students.keys():
+        if id == int(ids):
+            del students[ids]
+
+            logger.info(f'Student was deleted: id={ids}')
+            save_changes(students)
+            return {'message': 'Student was deleted'}
+
+        else:
+            logger.warning('Student not found')
+            return {'warning': 'Student not found'}
+
 #Поднимаем сервер
 if __name__ == '__main__':
     uvicorn.run('server:app', reload=True)

@@ -1,14 +1,14 @@
 {
-    "1": {
-        "id": 1,
-        "name": "\u0414\u0435\u043d\u0447\u0438\u043a",
-        "grade": 11,
+    "5": {
+        "id": 5,
+        "name": "string",
+        "grade": 9,
         "tariff": "pro"
     },
-    "2": {
-        "id": 2,
-        "name": "\u0410\u0440\u0442\u0443\u0440",
-        "grade": 7,
+    "6": {
+        "id": 6,
+        "name": "string",
+        "grade": 9,
         "tariff": "mini"
     }
 }
