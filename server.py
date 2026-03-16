@@ -55,6 +55,16 @@ def save_changes(students: dict) -> None:
         json.dump(students, f, indent=4)
     logger.info('Changes saved')
 
+def check_for_duplicates(student: Student):
+    '''Проверяем на дубликаты'''
+    students = load_students()
+
+    #Проходимя по каждому ученику в БД и сверяем их данные с данными нового ученика
+    for dicts in students.values():
+        if dicts['name'] == student.name and dicts['grade'] == student.grade and dicts['tariff'] == student.tariff:
+            
+            logger.warning(f'Duplicate-student creation rejected: id={dicts['id']}')
+            return {'warning': 'Duplicate-student creation rejected'}
 
 @app.get('/')
 def root() -> str:
@@ -82,16 +92,13 @@ def get_student(id: int) -> dict:
         return {'message': 'Student not found'}
 
 @app.post('/students/')
-def create_student(student: Student):
+def create_student(student: Student) -> dict:
     '''Добавляем ученика'''
     students = load_students()
 
-    #Проверяем на дубликаты
-    for dicts in students.values():
-        if dicts['name'] == student.name and dicts['grade'] == student.grade and dicts['tariff'] == student.tariff:
-            
-            logger.warning(f'Duplicate-student creation rejected: id={dicts['id']}')
-            return {'warning': 'Duplicate-student creation rejected'}
+    #Проверяем на дублирование
+    if check_for_duplicates(student=student):
+        return check_for_duplicates(student=student)
 
     #Берём максимальный существующий id и увеличиваем его на единицу
     new_id = int(list(students.keys())[-1]) + 1 
@@ -106,8 +113,6 @@ def create_student(student: Student):
 
     logger.info(f'Student was added: id={new_id}')
     return {'message': 'Student was added'}
-
-
 
 #Поднимаем сервер
 if __name__ == '__main__':
