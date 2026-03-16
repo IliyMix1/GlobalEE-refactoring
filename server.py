@@ -1,0 +1,114 @@
+#Импортируем библиотеки
+from fastapi import FastAPI
+from pydantic import BaseModel, field_validator
+import logging
+import uvicorn
+import json
+
+#Настраиваем логирование
+logging.basicConfig(level=logging.INFO, 
+                    filename="py_log.log", 
+                    filemode="a", 
+                    format="%(asctime)s %(levelname)s %(message)s", 
+                    encoding='utf-8')
+logger = logging.getLogger(__name__)
+
+#Создаём объект класса FastAPI
+app = FastAPI()
+
+#Создаём класс, для удобства работы со студентом
+class Student(BaseModel):
+    name:   str
+    grade:  int
+    tariff: str
+
+    #Проводим валидацию класса ученика
+    @field_validator('grade')
+    @classmethod
+    def validate_grade(cls, value):
+        if value not in (9, 10, 11):
+            raise ValueError('Grade must be 9, 10 or 11')
+        else:
+            return value
+    
+    #Проводим валидацию тарифа ученика
+    @field_validator('tariff')
+    @classmethod
+    def validate_tariff(cls, value):
+        value = value.lower() 
+        if value != 'mini' and value != 'standard' and value != 'pro':
+            raise ValueError('There is no such tariff. Pick "mini" or "standard" or "pro"')
+        else:
+            return value
+
+
+
+def load_students() -> dict:
+    '''Читаем файл и возвращаем словарь словарей'''
+    with open('students.json', 'r') as f:
+        students = json.load(f)
+    return students
+
+def save_changes(students: dict) -> None:
+    '''Сохраняем изменения в файл'''
+    with open('students.json', 'w') as f:
+        json.dump(students, f, indent=4)
+    logger.info('Changes saved')
+
+
+@app.get('/')
+def root() -> str:
+    return "You've entered the main page"
+
+@app.get('/students')
+def get_all_students() -> list:        #Возвращаем список словарей
+    '''Отображаем всю базу данных'''
+    students = load_students()
+    students_list = []
+    for student in students.values():
+        students_list.append(student)
+
+    return students_list
+
+@app.get('/students/{id}')
+def get_student(id: int) -> dict:
+    '''Отображаем конкретного ученика по id'''
+    students = load_students()
+    #Если в словаре есть студент с таким id - возвращаем его
+    if students.get(str(id)):
+        return students[str(id)]
+    else:
+        logger.warning(f'Student not found: id={id}')
+        return {'message': 'Student not found'}
+
+@app.post('/students/')
+def create_student(student: Student):
+    '''Добавляем ученика'''
+    students = load_students()
+
+    #Проверяем на дубликаты
+    for dicts in students.values():
+        if dicts['name'] == student.name and dicts['grade'] == student.grade and dicts['tariff'] == student.tariff:
+            
+            logger.warning(f'Duplicate-student creation rejected: id={dicts['id']}')
+            return {'warning': 'Duplicate-student creation rejected'}
+
+    #Берём максимальный существующий id и увеличиваем его на единицу
+    new_id = int(list(students.keys())[-1]) + 1 
+    #Добавляем нового ученика в словарь
+    students[new_id] = {
+        'id': new_id,
+        'name': student.name,
+        'grade': student.grade,
+        'tariff': student.tariff,
+    }
+    save_changes(students=students)
+
+    logger.info(f'Student was added: id={new_id}')
+    return {'message': 'Student was added'}
+
+
+
+#Поднимаем сервер
+if __name__ == '__main__':
+    uvicorn.run('server:app', reload=True)
