@@ -45,9 +45,28 @@ class Student(BaseModel):
 
 def load_students() -> dict:
     '''Читаем файл и возвращаем словарь словарей'''
-    with open('students.json', 'r') as f:
-        students = json.load(f)
-    return students
+    #Пробуем прочитать файл
+    try:
+        with open('students.json', 'r') as f:
+            students = json.load(f)
+            return students
+        
+    #Если файла не существует - создаём его
+    except FileNotFoundError:
+        #Создаём шаблон
+        template = {1: {
+            'id': 1,
+            'name': 'Jon Snow',
+            'grade': 11,
+            'tariff': 'mini',
+        }}
+        
+        with open('students.json', 'w') as f:
+            json.dump(template, f, indent=4)
+        
+        return template
+            
+    
 
 def save_changes(students: dict) -> None:
     '''Сохраняем изменения в файл'''
