@@ -130,6 +130,33 @@ def delete_student(id: int):
             logger.warning('Student not found')
             return {'warning': 'Student not found'}
 
+@app.put('/students/{id}')
+def update_all_info(id: int, student: Student):
+    '''Обновляем всю информацию об ученике'''
+    students = load_students()
+    #Проверяем на дублирование
+    if check_for_duplicates(student=student):
+        return check_for_duplicates(student=student)
+    
+    for ids in students.keys():
+        if id == int(ids):
+            
+            #Обновляем всю информацию
+            students[ids] = {
+                'id': id,
+                'name': student.name,
+                'grade': student.grade,
+                'tariff': student.tariff,
+            }
+            
+            #Сохраняем изменения, если всё хорошо
+            save_changes(students=students)
+            logger.info(f'Student data was changed entirely: id={id}')
+            return{'message': 'Student data was changed entirely'}
+    else:
+        logger.warning('Student not found')
+        return {'warning': 'Student not found'}
+
 #Поднимаем сервер
 if __name__ == '__main__':
     uvicorn.run('server:app', reload=True)
