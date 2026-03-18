@@ -55,16 +55,19 @@ def save_changes(students: dict) -> None:
         json.dump(students, f, indent=4)
     logger.info('Changes saved')
 
-def check_for_duplicates(student: Student):
+def check_for_duplicates(student: Student) -> bool:
     '''Проверяем на дубликаты'''
     students = load_students()
 
+    any_duplicates = False
     #Проходимя по каждому ученику в БД и сверяем их данные с данными нового ученика
     for dicts in students.values():
         if dicts['name'] == student.name and dicts['grade'] == student.grade and dicts['tariff'] == student.tariff:
             
             logger.warning(f'Duplicate-student creation rejected: id={dicts['id']}')
-            return {'warning': 'Duplicate-student creation rejected'}
+            any_duplicates = True
+            
+            return any_duplicates
 
 @app.get('/')
 def root() -> str:
@@ -98,10 +101,11 @@ def create_student(student: Student) -> dict:
 
     #Проверяем на дублирование
     if check_for_duplicates(student=student):
-        return check_for_duplicates(student=student)
+        return {'warning': 'Duplicate-student creation rejected'}
 
-    #Берём максимальный существующий id и увеличиваем его на единицу
-    new_id = int(list(students.keys())[-1]) + 1 
+    #Составляем список всех id, находим максимальный и увеличиваем его на 1
+    ids = [int(i) for i in students.keys()]
+    new_id = max(ids) + 1 
     #Добавляем нового ученика в словарь
     students[new_id] = {
         'id': new_id,
@@ -115,7 +119,7 @@ def create_student(student: Student) -> dict:
     return {'message': 'Student was added'}
 
 @app.delete('/students/{id}')
-def delete_student(id: int):
+def delete_student(id: int) -> dict:
     students = load_students()
 
     for ids in students.keys():
@@ -126,17 +130,17 @@ def delete_student(id: int):
             save_changes(students)
             return {'message': 'Student was deleted'}
 
-        else:
-            logger.warning('Student not found')
-            return {'warning': 'Student not found'}
+    else:
+        logger.warning('Student not found')
+        return {'warning': 'Student not found'}
 
 @app.put('/students/{id}')
-def update_all_info(id: int, student: Student):
+def update_all_info(id: int, student: Student) -> dict:
     '''Обновляем всю информацию об ученике'''
     students = load_students()
     #Проверяем на дублирование
     if check_for_duplicates(student=student):
-        return check_for_duplicates(student=student)
+        return{'warning': 'Duplicate-student creation rejected'}
     
     for ids in students.keys():
         if id == int(ids):
