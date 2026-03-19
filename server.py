@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 #Создаём объект класса FastAPI
 app = FastAPI()
 
-#Создаём класс, для удобства работы со студентом
-class Student(BaseModel):
+#Создаём шаблон класс, для удобства работы со студентом
+class StudentBase(BaseModel):
     name:   str
     grade:  int
     tariff: str
@@ -25,7 +25,7 @@ class Student(BaseModel):
     #Проводим валидацию класса ученика
     @field_validator('grade')
     @classmethod
-    def validate_grade(cls, value):
+    def validate_grade(cls, value: int) -> int:
         if value not in (9, 10, 11):
             raise ValueError('Grade must be 9, 10 or 11')
         else:
@@ -34,13 +34,50 @@ class Student(BaseModel):
     #Проводим валидацию тарифа ученика
     @field_validator('tariff')
     @classmethod
-    def validate_tariff(cls, value):
+    def validate_tariff(cls, value: str) -> str:
         value = value.lower() 
         if value != 'mini' and value != 'standard' and value != 'pro':
             raise ValueError('There is no such tariff. Pick "mini" or "standard" or "pro"')
         else:
             return value
 
+#Вариация класса для работы с выводом
+class StudentOut(StudentBase):
+    id: int
+
+#Вариация класса для создания студента
+class StudentCreate(StudentBase):
+    pass
+
+#Вариация класса для ПОЛНОГО изменения информации о студенте
+class StudentPut(StudentBase):
+    pass
+
+#Вариация класса для ЧАСТИЧНОГО изменения информации о студенте
+class StudentPatch(BaseModel):
+    #Наши переменные имеют либо INT/STR тип, либо None, а по умолчанию все они равны None
+    name:   str | None = None
+    grade:  int | None = None
+    tariff: str | None = None
+
+    #Проводим валидацию класса ученика
+    @field_validator('grade')
+    @classmethod
+    def validate_grade(cls, value: int | None) -> int | None:
+        if value not in (9, 10, 11):
+            raise ValueError('Grade must be 9, 10 or 11')
+        else:
+            return value
+    
+    #Проводим валидацию тарифа ученика
+    @field_validator('tariff')
+    @classmethod
+    def validate_tariff(cls, value: str | None) -> str | None:
+        value = value.lower() 
+        if value != 'mini' and value != 'standard' and value != 'pro':
+            raise ValueError('There is no such tariff. Pick "mini" or "standard" or "pro"')
+        else:
+            return value
 
 
 def load_students() -> dict:
@@ -74,7 +111,7 @@ def save_changes(students: dict) -> None:
         json.dump(students, f, indent=4)
     logger.info('Changes saved')
 
-def check_for_duplicates(student: Student) -> bool:
+def check_for_duplicates(student: StudentOut) -> bool:
     '''Проверяем на дубликаты'''
     students = load_students()
 
@@ -114,7 +151,7 @@ def get_student(id: int) -> dict:
         raise HTTPException(status_code=404, detail='Student not found')
 
 @app.post('/students/', status_code=201)
-def create_student(student: Student) -> dict:
+def create_student(student: StudentCreate) -> dict:
     '''Добавляем ученика'''
     students = load_students()
 
@@ -154,7 +191,7 @@ def delete_student(id: int) -> dict:
         raise HTTPException(status_code=404, detail='Student not found')
 
 @app.put('/students/{id}')
-def update_all_info(id: int, student: Student) -> dict:
+def put_student_data(id: int, student: StudentPut) -> dict:
     '''Обновляем всю информацию об ученике'''
     students = load_students()
     #Проверяем на дублирование
@@ -175,6 +212,32 @@ def update_all_info(id: int, student: Student) -> dict:
             #Сохраняем изменения, если всё хорошо
             save_changes(students=students)
             logger.info(f'Student data was changed entirely: id={id}')
+            return students[ids]
+    else:
+        logger.warning('Student not found')
+        raise HTTPException(status_code=404, detail='Student not found')
+
+@app.patch('/students/{id}')
+def patch_student_data(id: int, student: StudentPatch):
+    '''Обновляем часть информации об ученике'''
+    students = load_students()
+    #Проверяем на дублирование
+    if check_for_duplicates(student=student):
+        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
+    
+    for ids in students.keys():
+        if id == int(ids):
+            #Обновляем всю информацию
+            if student.name:
+                students[ids]['name'] = student.name
+            if student.grade:
+                students[ids]['grade'] = student.grade
+            if student.tariff:
+                students[ids]['tariff'] = student.tariff
+            
+            #Сохраняем изменения, если всё хорошо
+            save_changes(students=students)
+            logger.info(f'Student data was changed partly: id={id}')
             return students[ids]
     else:
         logger.warning('Student not found')
