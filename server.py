@@ -137,11 +137,7 @@ def root() -> str:
 def get_all_students() -> list:        #Возвращаем список словарей
     '''Отображаем всю базу данных'''
     students = load_students()
-    students_list = []
-    for student in students.values():
-        students_list.append(student)
-
-    return students_list
+    return list(students.values())
 
 @app.get('/students/{id}')
 def get_student(id: int) -> dict:
@@ -159,8 +155,8 @@ def create_student(student: StudentCreate) -> dict:
     '''Добавляем ученика'''
     students = load_students()
 
-    new_student = student.model_dump()
     #Проверяем на дублирование
+    new_student = student.model_dump()  #Заносим данные из модели в словрь
     if check_for_duplicates(student=new_student):
         raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
 
@@ -168,7 +164,7 @@ def create_student(student: StudentCreate) -> dict:
     ids = [int(i) for i in students.keys()]
     new_id = max(ids) + 1 
     #Добавляем нового ученика в словарь
-    students[new_id] = {
+    students[str(new_id)] = {
         'id': new_id,
         'name': student.name,
         'grade': student.grade,
@@ -177,77 +173,75 @@ def create_student(student: StudentCreate) -> dict:
     save_changes(students=students)
 
     logger.info(f'Student was added: id={new_id}')
-    return students[new_id]
+    return students[str(new_id)]
 
 @app.delete('/students/{id}')
 def delete_student(id: int) -> dict:
     students = load_students()
 
-    for ids in students.keys():
-        if id == int(ids):
-            del students[ids]
-
-            logger.info(f'Student was deleted: id={ids}')
-            save_changes(students)
-            return {'message': 'Student was deleted'}
-
-    else:
+    #Если не найден ученик с таким id - возвращаем ошибку
+    if students.get(str(id)) is None:
         logger.warning(f'Student not found')
         raise HTTPException(status_code=404, detail='Student not found')
+    
+    #Удаляем студента
+    del students[str(id)]
+    
+    logger.info(f'Student was deleted: id={id}')
+    save_changes(students)
+    return {'message': 'Student was deleted'}
 
 @app.put('/students/{id}')
 def put_student_data(id: int, student: StudentPut) -> dict:
     '''Обновляем всю информацию об ученике'''
     students = load_students()
 
-    for ids in students.keys():
-        if id == int(ids): 
-            #Обновляем всю информацию
-            students[ids] = {
-                'id': id,
-                'name': student.name,
-                'grade': student.grade,
-                'tariff': student.tariff,
-            }
-
-            #Проверяем на дублирование
-            if check_for_duplicates(student=students[ids]):
-                raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
-            
-            #Сохраняем изменения, если всё хорошо
-            save_changes(students=students)
-            logger.info(f'Student data was changed entirely: id={id}')
-            return students[ids]
-    else:
+    new_student = students.get(str(id))
+    if new_student is None:
         logger.warning('Student not found')
         raise HTTPException(status_code=404, detail='Student not found')
+    
+    #Обновляем всю информацию
+    students[str(id)] = {
+        'id': id,
+        'name': student.name,
+        'grade': student.grade,
+       'tariff': student.tariff,
+    }
+    #Проверяем на дублирование
+    if check_for_duplicates(student=students[str(id)]):
+        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
+    
+    #Сохраняем изменения, если всё хорошо
+    save_changes(students=students)
+    logger.info(f'Student data was changed entirely: id={id}')
+    return students[str(id)]
 
 @app.patch('/students/{id}')
 def patch_student_data(id: int, student: StudentPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
     
-    for ids in students.keys():
-        if id == int(ids):
-            #Обновляем всю информацию
-            if student.name:
-                students[ids]['name']   = student.name
-            if student.grade:
-                students[ids]['grade']  = student.grade
-            if student.tariff:
-                students[ids]['tariff'] = student.tariff
-
-            #Проверяем на дублирование
-            if check_for_duplicates(student=students[ids]):
-                raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
-            
-            #Сохраняем изменения, если всё хорошо
-            save_changes(students=students)
-            logger.info(f'Student data was changed partly: id={id}')
-            return students[ids]
-    else:
+    new_student = students.get(str(id))
+    if new_student is None:
         logger.warning('Student not found')
         raise HTTPException(status_code=404, detail='Student not found')
+    #Обновляем всю информацию
+    if student.name:
+        students[str(id)]['name']   = student.name
+    if student.grade:
+        students[str(id)]['grade']  = student.grade
+    if student.tariff:
+        students[str(id)]['tariff'] = student.tariff
+    
+    #Проверяем на дублирование
+    if check_for_duplicates(student=students[str(id)]):
+        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
+    
+    #Сохраняем изменения, если всё хорошо
+    save_changes(students=students)
+    logger.info(f'Student data was changed partly: id={id}')
+    return students[str(id)]
 
 #Поднимаем сервер
 if __name__ == '__main__':
