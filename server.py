@@ -222,22 +222,21 @@ def patch_student_data(id: int, student: StudentPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
     
-    new_student = students.get(str(id))
-    if new_student is None:
+    current_student = students.get(str(id))
+    if current_student is None:
         logger.warning('Student not found')
         raise HTTPException(status_code=404, detail='Student not found')
-    #Обновляем всю информацию
-    if student.name:
-        students[str(id)]['name']   = student.name
-    if student.grade:
-        students[str(id)]['grade']  = student.grade
-    if student.tariff:
-        students[str(id)]['tariff'] = student.tariff
+    
+    updated_student = current_student.copy()
+    #Сохраняем словарь с изменениями в новую переменную(аргумент функции выкидывает значения по умолчанию, оставляя только изменённое)
+    update_data = student.model_dump(exclude_unset=True)
+    updated_student.update(update_data)
     
     #Проверяем на дублирование
-    if check_for_duplicates(student=students[str(id)]):
+    if check_for_duplicates(student=updated_student):
         raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
     
+    students[str(id)] = updated_student
     #Сохраняем изменения, если всё хорошо
     save_changes(students=students)
     logger.info(f'Student data was changed partly: id={id}')
