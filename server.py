@@ -1,5 +1,5 @@
 #Импортируем библиотеки
-from fastapi import FastAPI
+from fastapi  import FastAPI, HTTPException
 from pydantic import BaseModel, field_validator
 import logging
 import uvicorn
@@ -60,7 +60,7 @@ def load_students() -> dict:
             'grade': 11,
             'tariff': 'mini',
         }}
-        
+
         with open('students.json', 'w') as f:
             json.dump(template, f, indent=4)
         
@@ -86,7 +86,7 @@ def check_for_duplicates(student: Student) -> bool:
             logger.warning(f'Duplicate-student creation rejected: id={dicts['id']}')
             any_duplicates = True
             
-            return any_duplicates
+    return any_duplicates
 
 @app.get('/')
 def root() -> str:
@@ -111,16 +111,16 @@ def get_student(id: int) -> dict:
         return students[str(id)]
     else:
         logger.warning(f'Student not found: id={id}')
-        return {'message': 'Student not found'}
+        raise HTTPException(status_code=404, detail='Student not found')
 
-@app.post('/students/')
+@app.post('/students/', status_code=201)
 def create_student(student: Student) -> dict:
     '''Добавляем ученика'''
     students = load_students()
 
     #Проверяем на дублирование
     if check_for_duplicates(student=student):
-        return {'warning': 'Duplicate-student creation rejected'}
+        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
 
     #Составляем список всех id, находим максимальный и увеличиваем его на 1
     ids = [int(i) for i in students.keys()]
@@ -135,7 +135,7 @@ def create_student(student: Student) -> dict:
     save_changes(students=students)
 
     logger.info(f'Student was added: id={new_id}')
-    return {'message': 'Student was added'}
+    return students[new_id]
 
 @app.delete('/students/{id}')
 def delete_student(id: int) -> dict:
@@ -150,8 +150,8 @@ def delete_student(id: int) -> dict:
             return {'message': 'Student was deleted'}
 
     else:
-        logger.warning('Student not found')
-        return {'warning': 'Student not found'}
+        logger.warning(f'Student not found')
+        raise HTTPException(status_code=404, detail='Student not found')
 
 @app.put('/students/{id}')
 def update_all_info(id: int, student: Student) -> dict:
@@ -159,8 +159,8 @@ def update_all_info(id: int, student: Student) -> dict:
     students = load_students()
     #Проверяем на дублирование
     if check_for_duplicates(student=student):
-        return{'warning': 'Duplicate-student creation rejected'}
-    
+        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
+
     for ids in students.keys():
         if id == int(ids):
             
@@ -175,10 +175,10 @@ def update_all_info(id: int, student: Student) -> dict:
             #Сохраняем изменения, если всё хорошо
             save_changes(students=students)
             logger.info(f'Student data was changed entirely: id={id}')
-            return{'message': 'Student data was changed entirely'}
+            return students[ids]
     else:
         logger.warning('Student not found')
-        return {'warning': 'Student not found'}
+        raise HTTPException(status_code=404, detail='Student not found')
 
 #Поднимаем сервер
 if __name__ == '__main__':
