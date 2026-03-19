@@ -64,6 +64,9 @@ class StudentPatch(BaseModel):
     @field_validator('grade')
     @classmethod
     def validate_grade(cls, value: int | None) -> int | None:
+        if value is None:
+            return value
+        
         if value not in (9, 10, 11):
             raise ValueError('Grade must be 9, 10 or 11')
         else:
@@ -73,6 +76,9 @@ class StudentPatch(BaseModel):
     @field_validator('tariff')
     @classmethod
     def validate_tariff(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        
         value = value.lower() 
         if value != 'mini' and value != 'standard' and value != 'pro':
             raise ValueError('There is no such tariff. Pick "mini" or "standard" or "pro"')
@@ -91,7 +97,7 @@ def load_students() -> dict:
     #Если файла не существует - создаём его
     except FileNotFoundError:
         #Создаём шаблон
-        template = {1: {
+        template = {'1': {
             'id': 1,
             'name': 'Jon Snow',
             'grade': 11,
@@ -102,8 +108,6 @@ def load_students() -> dict:
             json.dump(template, f, indent=4)
         
         return template
-            
-    
 
 def save_changes(students: dict) -> None:
     '''Сохраняем изменения в файл'''
@@ -111,16 +115,16 @@ def save_changes(students: dict) -> None:
         json.dump(students, f, indent=4)
     logger.info('Changes saved')
 
-def check_for_duplicates(student: StudentOut) -> bool:
+def check_for_duplicates(student: dict) -> bool:
     '''Проверяем на дубликаты'''
     students = load_students()
 
     any_duplicates = False
     #Проходимя по каждому ученику в БД и сверяем их данные с данными нового ученика
     for dicts in students.values():
-        if dicts['name'] == student.name and dicts['grade'] == student.grade and dicts['tariff'] == student.tariff:
+        if dicts['name'] == student['name'] and dicts['grade'] == student['grade'] and dicts['tariff'] == student['tariff']:
             
-            logger.warning(f'Duplicate-student creation rejected: id={dicts['id']}')
+            logger.warning(f'Duplicate-student creation rejected: id={dicts["id"]}')
             any_duplicates = True
             
     return any_duplicates
@@ -155,8 +159,9 @@ def create_student(student: StudentCreate) -> dict:
     '''Добавляем ученика'''
     students = load_students()
 
+    new_student = student.model_dump()
     #Проверяем на дублирование
-    if check_for_duplicates(student=student):
+    if check_for_duplicates(student=new_student):
         raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
 
     #Составляем список всех id, находим максимальный и увеличиваем его на 1
@@ -194,13 +199,9 @@ def delete_student(id: int) -> dict:
 def put_student_data(id: int, student: StudentPut) -> dict:
     '''Обновляем всю информацию об ученике'''
     students = load_students()
-    #Проверяем на дублирование
-    if check_for_duplicates(student=student):
-        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
 
     for ids in students.keys():
-        if id == int(ids):
-            
+        if id == int(ids): 
             #Обновляем всю информацию
             students[ids] = {
                 'id': id,
@@ -208,6 +209,10 @@ def put_student_data(id: int, student: StudentPut) -> dict:
                 'grade': student.grade,
                 'tariff': student.tariff,
             }
+
+            #Проверяем на дублирование
+            if check_for_duplicates(student=students[ids]):
+                raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
             
             #Сохраняем изменения, если всё хорошо
             save_changes(students=students)
@@ -221,19 +226,20 @@ def put_student_data(id: int, student: StudentPut) -> dict:
 def patch_student_data(id: int, student: StudentPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
-    #Проверяем на дублирование
-    if check_for_duplicates(student=student):
-        raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
     
     for ids in students.keys():
         if id == int(ids):
             #Обновляем всю информацию
             if student.name:
-                students[ids]['name'] = student.name
+                students[ids]['name']   = student.name
             if student.grade:
-                students[ids]['grade'] = student.grade
+                students[ids]['grade']  = student.grade
             if student.tariff:
                 students[ids]['tariff'] = student.tariff
+
+            #Проверяем на дублирование
+            if check_for_duplicates(student=students[ids]):
+                raise HTTPException(status_code=409, detail='Duplicate-student creation rejected')
             
             #Сохраняем изменения, если всё хорошо
             save_changes(students=students)
