@@ -1,6 +1,7 @@
 #Импортируем библиотеки
-from fastapi  import FastAPI, HTTPException
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
+from fastapi  import FastAPI, HTTPException, Query
+from typing   import Literal, Annotated
 import logging
 import uvicorn
 import json
@@ -85,6 +86,12 @@ class StudentPatch(BaseModel):
         else:
             return value
 
+class StudentFilters(BaseModel):
+    #Настраиваем значение фильтра через Field: задаём дефолтное значение и интервал
+    grade: int | None = Field(default=None, ge=9, le=11)
+    #Говорим, что фильтр может быть либо одним из 3 конкретных значений, либо никаким
+    tariff: Literal['mini', 'standard', 'pro'] | None = None
+
 
 def load_students() -> dict:
     '''Читаем файл и возвращаем словарь словарей'''
@@ -134,10 +141,24 @@ def root() -> str:
     return "You've entered the main page"
 
 @app.get('/students')
-def get_all_students() -> list:        #Возвращаем список словарей
+def get_all_students(filters: Annotated[StudentFilters, Query()]) -> list:    #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
     '''Отображаем всю базу данных'''
+    #Загружаем всех учеников из файла в словарь вида (id: {info})
     students = load_students()
-    return list(students.values())
+    #Собираем список с информацией о всех студентах
+    students_list = list(students.values())
+
+    #Выкидываем из списка учеников с несовпадающим классом
+    if filters.grade is not None:
+        students_list = [student for student in students_list if student['grade'] == filters.grade]
+    #Выкидываем из списка учеников с несовпадающим тарифом
+    if filters.tariff is not None:
+        students_list = [student for student in students_list if student['tariff'] == filters.tariff]
+
+    if not students_list:
+        raise HTTPException(status_code=404, detail='No students were found')
+
+    return students_list
 
 @app.get('/students/{id}')
 def get_student(id: int) -> dict:
