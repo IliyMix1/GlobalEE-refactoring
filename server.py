@@ -19,9 +19,23 @@ app = FastAPI()
 
 #Создаём шаблон класс, для удобства работы со студентом
 class StudentBase(BaseModel):
-    name:   str
+    name:   str = Field(min_length=2, max_length=50)
     grade:  Literal[9, 10, 11]
     tariff: Literal['mini', 'standard', 'pro']
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        value = value.strip()
+        #Проверяем, не стала ли строка пустой после удаления лишних пробелов
+        if len(value) < 2:
+            raise ValueError('Name should not be empty')
+        
+        #Проверяем, есть ли в имени цифры
+        for symbol in value:
+            if symbol.isdigit():
+                raise ValueError('Name should not contain digits')
+        return value
 
 #Вариация класса для работы с выводом
 class StudentOut(StudentBase):
@@ -41,6 +55,23 @@ class StudentPatch(BaseModel):
     name:   str | None = None
     grade:  Literal[9, 10, 11] | None = None
     tariff: Literal['mini', 'standard', 'pro'] | None = None
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        if value is None:
+            return value
+        
+        value = value.strip()
+        #Проверяем, не стала ли строка пустой после удаления лишних пробелов
+        if len(value) < 2:
+            raise ValueError('Name should not be empty')
+
+        #Проверяем, есть ли в имени цифры
+        for symbol in value:
+            if symbol.isdigit():
+                raise ValueError('Name should not contain digits')
+        return value
 
 class StudentFilters(BaseModel):
     #Настраиваем значение фильтра через Field: задаём дефолтное значение и интервал
