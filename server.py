@@ -20,27 +20,8 @@ app = FastAPI()
 #Создаём шаблон класс, для удобства работы со студентом
 class StudentBase(BaseModel):
     name:   str
-    grade:  int
-    tariff: str
-
-    #Проводим валидацию класса ученика
-    @field_validator('grade')
-    @classmethod
-    def validate_grade(cls, value: int) -> int:
-        if value not in (9, 10, 11):
-            raise ValueError('Grade must be 9, 10 or 11')
-        else:
-            return value
-    
-    #Проводим валидацию тарифа ученика
-    @field_validator('tariff')
-    @classmethod
-    def validate_tariff(cls, value: str) -> str:
-        value = value.lower() 
-        if value != 'mini' and value != 'standard' and value != 'pro':
-            raise ValueError('There is no such tariff. Pick "mini" or "standard" or "pro"')
-        else:
-            return value
+    grade:  Literal[9, 10, 11]
+    tariff: Literal['mini', 'standard', 'pro']
 
 #Вариация класса для работы с выводом
 class StudentOut(StudentBase):
@@ -58,33 +39,8 @@ class StudentPut(StudentBase):
 class StudentPatch(BaseModel):
     #Наши переменные имеют либо INT/STR тип, либо None, а по умолчанию все они равны None
     name:   str | None = None
-    grade:  int | None = None
-    tariff: str | None = None
-
-    #Проводим валидацию класса ученика
-    @field_validator('grade')
-    @classmethod
-    def validate_grade(cls, value: int | None) -> int | None:
-        if value is None:
-            return value
-        
-        if value not in (9, 10, 11):
-            raise ValueError('Grade must be 9, 10 or 11')
-        else:
-            return value
-    
-    #Проводим валидацию тарифа ученика
-    @field_validator('tariff')
-    @classmethod
-    def validate_tariff(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-        
-        value = value.lower() 
-        if value != 'mini' and value != 'standard' and value != 'pro':
-            raise ValueError('There is no such tariff. Pick "mini" or "standard" or "pro"')
-        else:
-            return value
+    grade:  Literal[9, 10, 11] | None = None
+    tariff: Literal['mini', 'standard', 'pro'] | None = None
 
 class StudentFilters(BaseModel):
     #Настраиваем значение фильтра через Field: задаём дефолтное значение и интервал
