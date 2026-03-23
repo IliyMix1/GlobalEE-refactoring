@@ -127,8 +127,8 @@ def check_for_duplicates(student: dict) -> bool:
 def root() -> str:
     return "You've entered the main page"
 
-@app.get('/students')
-def get_all_students(filters: Annotated[StudentFilters, Query()]) -> list:    #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
+@app.get('/students', response_model=list[StudentOut])
+def get_all_students(filters: Annotated[StudentFilters, Query()]):    #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
     '''Отображаем всю базу данных'''
     #Загружаем всех учеников из файла в словарь вида (id: {info})
     students = load_students()
@@ -147,8 +147,8 @@ def get_all_students(filters: Annotated[StudentFilters, Query()]) -> list:    #A
 
     return students_list
 
-@app.get('/students/{id}')
-def get_student(id: int) -> dict:
+@app.get('/students/{id}', response_model=StudentOut)
+def get_student(id: int):
     '''Отображаем конкретного ученика по id'''
     students = load_students()
     #Если в словаре есть студент с таким id - возвращаем его
@@ -158,8 +158,8 @@ def get_student(id: int) -> dict:
         logger.warning(f'Student not found: id={id}')
         raise HTTPException(status_code=404, detail='Student not found')
 
-@app.post('/students/', status_code=201)
-def create_student(student: StudentCreate) -> dict:
+@app.post('/students/', response_model=StudentOut, status_code=201)
+def create_student(student: StudentCreate):
     '''Добавляем ученика'''
     students = load_students()
 
@@ -199,8 +199,8 @@ def delete_student(id: int) -> dict:
     save_changes(students)
     return {'message': 'Student was deleted'}
 
-@app.put('/students/{id}')
-def put_student_data(id: int, student: StudentPut) -> dict:
+@app.put('/students/{id}', response_model=StudentOut)
+def put_student_data(id: int, student: StudentPut):
     '''Обновляем всю информацию об ученике'''
     students = load_students()
 
@@ -225,7 +225,7 @@ def put_student_data(id: int, student: StudentPut) -> dict:
     logger.info(f'Student data was changed entirely: id={id}')
     return students[str(id)]
 
-@app.patch('/students/{id}')
+@app.patch('/students/{id}', response_model=StudentOut)
 def patch_student_data(id: int, student: StudentPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
