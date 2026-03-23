@@ -1,6 +1,6 @@
 #Импортируем библиотеки
 from pydantic import BaseModel, field_validator, Field
-from fastapi  import FastAPI, HTTPException, Query
+from fastapi  import FastAPI, HTTPException, Query, APIRouter
 from typing   import Literal, Annotated
 import logging
 import uvicorn
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 #Создаём объект класса FastAPI
 app = FastAPI()
+students_router = APIRouter(prefix='/students', tags=['students'])
 
 #Создаём шаблон класс, для удобства работы со студентом
 class StudentBase(BaseModel):
@@ -127,7 +128,7 @@ def check_for_duplicates(student: dict) -> bool:
 def root() -> str:
     return "You've entered the main page"
 
-@app.get('/students', response_model=list[StudentOut])
+@students_router.get('/', response_model=list[StudentOut])
 def get_all_students(
     #filters: Annotated[StudentFilters, Query()],  #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
     #Для фильтрации
@@ -168,7 +169,7 @@ def get_all_students(
 
     return students_list
 
-@app.get('/students/{id}', response_model=StudentOut)
+@students_router.get('/{id}', response_model=StudentOut)
 def get_student(id: int):
     '''Отображаем конкретного ученика по id'''
     students = load_students()
@@ -179,7 +180,7 @@ def get_student(id: int):
         logger.warning(f'Student not found: id={id}')
         raise HTTPException(status_code=404, detail='Student not found')
 
-@app.post('/students/', response_model=StudentOut, status_code=201)
+@students_router.post('/', response_model=StudentOut, status_code=201)
 def create_student(student: StudentCreate):
     '''Добавляем ученика'''
     students = load_students()
@@ -204,7 +205,7 @@ def create_student(student: StudentCreate):
     logger.info(f'Student was added: id={new_id}')
     return students[str(new_id)]
 
-@app.delete('/students/{id}')
+@students_router.delete('/{id}')
 def delete_student(id: int) -> dict:
     students = load_students()
 
@@ -220,7 +221,7 @@ def delete_student(id: int) -> dict:
     save_changes(students)
     return {'message': 'Student was deleted'}
 
-@app.put('/students/{id}', response_model=StudentOut)
+@students_router.put('/{id}', response_model=StudentOut)
 def put_student_data(id: int, student: StudentPut):
     '''Обновляем всю информацию об ученике'''
     students = load_students()
@@ -246,7 +247,7 @@ def put_student_data(id: int, student: StudentPut):
     logger.info(f'Student data was changed entirely: id={id}')
     return students[str(id)]
 
-@app.patch('/students/{id}', response_model=StudentOut)
+@students_router.patch('/{id}', response_model=StudentOut)
 def patch_student_data(id: int, student: StudentPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
@@ -270,6 +271,9 @@ def patch_student_data(id: int, student: StudentPatch):
     save_changes(students=students)
     logger.info(f'Student data was changed partly: id={id}')
     return students[str(id)]
+
+
+app.include_router(students_router)
 
 #Поднимаем сервер
 if __name__ == '__main__':
