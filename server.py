@@ -130,10 +130,15 @@ def root() -> str:
 @app.get('/students', response_model=list[StudentOut])
 def get_all_students(
     #filters: Annotated[StudentFilters, Query()],  #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
+    #Для фильтрации
     grade:   Literal['9', '10', '11'] | None = None,
     tariff:  Literal['mini', 'standard', 'pro'] | None = None,
+    #Для сортировки
     sort_by: Literal['id', 'name', 'grade', 'tariff'] = 'id',  #Задаём список параметров, по которому будем сортировать(по дефолту - сортируем по id)
-    order:   Literal['asc', 'desc'] = 'asc',       #Задаём сортировку в порядке возрастания/убывания             
+    order:   Literal['asc', 'desc'] = 'asc',       #Задаём сортировку в порядке возрастания/убывания 
+    #Для пагинации
+    offset: int = Query(default=0, ge=0),
+    limit:  int = Query(default=10, ge=1, le=100)
     ):   
     '''Отображаем всю базу данных'''
     #Загружаем всех учеников из файла в словарь вида (id: {info})
@@ -157,6 +162,9 @@ def get_all_students(
         key=lambda student: student[sort_by],  #Выбираем параметр для сортировки
         reverse=(order=='desc'),      #Задаём сортировку по возрастанию/убыванию(выражение в скобках даёт True/False)
         )
+
+    #Вырезаем необходимый кусок
+    students_list = students_list[offset: offset+limit]
 
     return students_list
 
