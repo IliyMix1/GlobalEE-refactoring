@@ -73,11 +73,11 @@ class StudentPatch(BaseModel):
                 raise ValueError('Name should not contain digits')
         return value
 
-class StudentFilters(BaseModel):
-    #Настраиваем значение фильтра через Field: задаём дефолтное значение и интервал
-    grade: int | None = Field(default=None, ge=9, le=11)
-    #Говорим, что фильтр может быть либо одним из 3 конкретных значений, либо никаким
-    tariff: Literal['mini', 'standard', 'pro'] | None = None
+# class StudentFilters(BaseModel):
+#     #Настраиваем значение фильтра через Field: задаём дефолтное значение и интервал
+#     grade: int | None = Field(default=None, ge=9, le=11)
+#     #Говорим, что фильтр может быть либо одним из 3 конкретных значений, либо никаким
+#     tariff: Literal['mini', 'standard', 'pro'] | None = None
 
 
 def load_students() -> dict:
@@ -128,7 +128,13 @@ def root() -> str:
     return "You've entered the main page"
 
 @app.get('/students', response_model=list[StudentOut])
-def get_all_students(filters: Annotated[StudentFilters, Query()]):    #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
+def get_all_students(
+    #filters: Annotated[StudentFilters, Query()],  #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
+    grade:   Literal['9', '10', '11'] | None = None,
+    tariff:  Literal['mini', 'standard', 'pro'] | None = None,
+    sort_by: Literal['id', 'name', 'grade', 'tariff'] = 'id',  #Задаём список параметров, по которому будем сортировать(по дефолту - сортируем по id)
+    order:   Literal['asc', 'desc'] = 'asc',       #Задаём сортировку в порядке возрастания/убывания             
+    ):   
     '''Отображаем всю базу данных'''
     #Загружаем всех учеников из файла в словарь вида (id: {info})
     students = load_students()
@@ -136,14 +142,21 @@ def get_all_students(filters: Annotated[StudentFilters, Query()]):    #Annotated
     students_list = list(students.values())
 
     #Выкидываем из списка учеников с несовпадающим классом
-    if filters.grade is not None:
-        students_list = [student for student in students_list if student['grade'] == filters.grade]
+    if grade is not None:
+        students_list = [student for student in students_list if student['grade'] == int(grade)]
     #Выкидываем из списка учеников с несовпадающим тарифом
-    if filters.tariff is not None:
-        students_list = [student for student in students_list if student['tariff'] == filters.tariff]
+    if tariff is not None:
+        students_list = [student for student in students_list if student['tariff'] == tariff]
 
-    if not students_list:
-        raise HTTPException(status_code=404, detail='No students were found')
+    # if not students_list:
+    #     raise HTTPException(status_code=404, detail='No students were found')
+
+    #Сортируем
+    students_list = sorted(
+        students_list, #Задаём список, по которому сортируем
+        key=lambda student: student[sort_by],  #Выбираем параметр для сортировки
+        reverse=(order=='desc'),      #Задаём сортировку по возрастанию/убыванию(выражение в скобках даёт True/False)
+        )
 
     return students_list
 
