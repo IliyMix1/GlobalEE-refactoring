@@ -1,10 +1,17 @@
 #Импортируем библиотеки
-from pydantic import BaseModel, field_validator, Field
-from fastapi  import FastAPI, HTTPException, Query, APIRouter
-from typing   import Literal, Annotated
+from fastapi  import HTTPException, Query, APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_session
+from models import User
+
+from typing import Literal
 import logging
-import uvicorn
 import json
+
+#Импортируем Pydantic-модели
+from schemas import *
 
 #Настраиваем логирование
 logging.basicConfig(level=logging.INFO, 
@@ -15,71 +22,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 #Создаём объект класса FastAPI
-app = FastAPI()
 students_router = APIRouter(prefix='/students', tags=['students'])
-
-#Создаём шаблон класс, для удобства работы со студентом
-class StudentBase(BaseModel):
-    name:   str = Field(min_length=2, max_length=50)
-    grade:  Literal[9, 10, 11]
-    tariff: Literal['mini', 'standard', 'pro']
-
-    @field_validator('name')
-    @classmethod
-    def validate_name(cls, value: str) -> str:
-        value = value.strip()
-        #Проверяем, не стала ли строка пустой после удаления лишних пробелов
-        if len(value) < 2:
-            raise ValueError('Name should not be empty')
-        
-        #Проверяем, есть ли в имени цифры
-        for symbol in value:
-            if symbol.isdigit():
-                raise ValueError('Name should not contain digits')
-        return value
-
-#Вариация класса для работы с выводом
-class StudentOut(StudentBase):
-    id: int
-
-#Вариация класса для создания студента
-class StudentCreate(StudentBase):
-    pass
-
-#Вариация класса для ПОЛНОГО изменения информации о студенте
-class StudentPut(StudentBase):
-    pass
-
-#Вариация класса для ЧАСТИЧНОГО изменения информации о студенте
-class StudentPatch(BaseModel):
-    #Наши переменные имеют либо INT/STR тип, либо None, а по умолчанию все они равны None
-    name:   str | None = None
-    grade:  Literal[9, 10, 11] | None = None
-    tariff: Literal['mini', 'standard', 'pro'] | None = None
-
-    @field_validator('name')
-    @classmethod
-    def validate_name(cls, value: str) -> str:
-        if value is None:
-            return value
-        
-        value = value.strip()
-        #Проверяем, не стала ли строка пустой после удаления лишних пробелов
-        if len(value) < 2:
-            raise ValueError('Name should not be empty')
-
-        #Проверяем, есть ли в имени цифры
-        for symbol in value:
-            if symbol.isdigit():
-                raise ValueError('Name should not contain digits')
-        return value
-
-# class StudentFilters(BaseModel):
-#     #Настраиваем значение фильтра через Field: задаём дефолтное значение и интервал
-#     grade: int | None = Field(default=None, ge=9, le=11)
-#     #Говорим, что фильтр может быть либо одним из 3 конкретных значений, либо никаким
-#     tariff: Literal['mini', 'standard', 'pro'] | None = None
-
 
 def load_students() -> dict:
     '''Читаем файл и возвращаем словарь словарей'''
@@ -124,10 +67,6 @@ def check_for_duplicates(student: dict) -> bool:
             
     return any_duplicates
 
-@app.get('/')
-def root() -> str:
-    return "You've entered the main page"
-
 @students_router.get('/', response_model=list[StudentOut])
 def get_all_students(
     #filters: Annotated[StudentFilters, Query()],  #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
@@ -153,10 +92,7 @@ def get_all_students(
     #Выкидываем из списка учеников с несовпадающим тарифом
     if tariff is not None:
         students_list = [student for student in students_list if student['tariff'] == tariff]
-
-    # if not students_list:
-    #     raise HTTPException(status_code=404, detail='No students were found')
-
+        
     #Сортируем
     students_list = sorted(
         students_list, #Задаём список, по которому сортируем
@@ -273,8 +209,8 @@ def patch_student_data(id: int, student: StudentPatch):
     return students[str(id)]
 
 
-app.include_router(students_router)
+#app.include_router(students_router)
 
-#Поднимаем сервер
-if __name__ == '__main__':
-    uvicorn.run('server:app', reload=True)
+# #Поднимаем сервер
+# if __name__ == '__main__':
+#     uvicorn.run('server:app', reload=True)
