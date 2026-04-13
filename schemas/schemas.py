@@ -13,14 +13,14 @@ class StudentBase(BaseModel):
         value = value.strip()
         #Проверяем, не стала ли строка пустой после удаления лишних пробелов
         if len(value) < 2:
-            raise ValueError('Name should not be empty')
+            raise ValueError('First name should not be empty')
         
         #Проверяем, есть ли в имени цифры
         for symbol in value:
             if symbol.isdigit():
-                raise ValueError('Name should not contain digits')
+                raise ValueError('First name should not contain digits')
         return value
-
+    
 #Вариация класса для работы с выводом
 class StudentOut(StudentBase):
     id: int
@@ -56,3 +56,12 @@ class StudentPatch(BaseModel):
             if symbol.isdigit():
                 raise ValueError('Name should not contain digits')
         return value
+    
+
+class UserCreate(BaseModel):
+    hashed_password: str = Field(min_length=2)
+    role: Literal['student', 'admin']
+
+class UserPatch(BaseModel):
+    hashed_password: str | None = None
+    role: Literal['student', 'admin'] | None = None

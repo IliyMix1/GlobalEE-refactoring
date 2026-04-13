@@ -7,7 +7,7 @@ import routes.students as students
 import routes.common as common
 
 from database import engine
-from models import Base
+from models.models import Base
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

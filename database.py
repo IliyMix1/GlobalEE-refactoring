@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 import os
@@ -16,3 +17,7 @@ async def get_session():
     #Создаём асинхронную сессию и кладём её в переменную(with - гарантирует, что она сама закроется после работы с сессией)
     async with async_session() as session:
         yield session
+
+async def select_data(model, session: AsyncSession):
+    result = await session.execute(select(model))
+    return result.scalars().all()

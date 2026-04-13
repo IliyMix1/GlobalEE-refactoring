@@ -3,15 +3,15 @@ from fastapi  import HTTPException, Query, APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_session
-from models import User
+from database import get_session, select_data
+from models.models import Student
 
 from typing import Literal
 import logging
 import json
 
 #Импортируем Pydantic-модели
-from schemas import *
+from schemas.schemas import *
 
 #Настраиваем логирование
 logging.basicConfig(level=logging.INFO, 
@@ -69,7 +69,6 @@ def check_for_duplicates(student: dict) -> bool:
 
 @students_router.get('/', response_model=list[StudentOut])
 def get_all_students(
-    #filters: Annotated[StudentFilters, Query()],  #Annotated говорит, что вкачестве аргумента используем объект и считаем его query param
     #Для фильтрации
     grade:   Literal['9', '10', '11'] | None = None,
     tariff:  Literal['mini', 'standard', 'pro'] | None = None,
@@ -207,10 +206,3 @@ def patch_student_data(id: int, student: StudentPatch):
     save_changes(students=students)
     logger.info(f'Student data was changed partly: id={id}')
     return students[str(id)]
-
-
-#app.include_router(students_router)
-
-# #Поднимаем сервер
-# if __name__ == '__main__':
-#     uvicorn.run('server:app', reload=True)
