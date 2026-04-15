@@ -67,6 +67,7 @@ class UserPatch(BaseModel):
     hashed_password: str | None = None
     role: Literal['student', 'admin'] | None = None
 
+
 class CourseCreate(BaseModel):
     name: str = Field(min_length=2)
 
@@ -74,5 +75,24 @@ class CoursePatch(BaseModel):
     name: str | None = None
 
 class CourseOut(CourseCreate):
-    course_id: int
+    course_id:  int
     created_at: date
+
+
+class EnrollmentCreate(BaseModel):
+    user_id:    int
+    course_id:  int
+    tariff:     Literal['mini', 'standard', 'pro']
+    status:     Literal['quit', 'active', 'finished']
+
+class EnrollmentPatch(BaseModel):
+    user_id:   int  | None = None
+    course_id: int  | None = None
+    tariff:    Literal['mini', 'stabdard', 'pro']    | None = None
+    status:    Literal['quit', 'active', 'finished'] | None = None
+    ended_at:  date | None = None
+
+class EnrollmentOut(EnrollmentCreate):
+    enrollment_id: int
+    created_at:    date
+    ended_at:      date | None

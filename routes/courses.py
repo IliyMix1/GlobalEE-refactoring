@@ -9,7 +9,7 @@ courses_router = APIRouter(prefix='/courses', tags=['Courses'])
 
 
 @courses_router.get('/', response_model=list[CourseOut])
-async def get_courses(session: AsyncSession = Depends(get_session)):
+async def get_all_courses(session: AsyncSession = Depends(get_session)):
     #Вызываем асинхронную функцию, чтобы посмотреть всю таблицу
     return await select_all_records(model=Course, session=session)
 

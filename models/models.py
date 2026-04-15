@@ -55,9 +55,8 @@ class Enrollment(Base):
     course_id:     Mapped[int]  = mapped_column(BigInteger, ForeignKey('courses.course_id', ondelete='CASCADE'), nullable=False)
     tariff:        Mapped[str]  = mapped_column(String(10), nullable=False)
     status:        Mapped[str]  = mapped_column(String(10), nullable=False)
-    started_at:    Mapped[date] = mapped_column(Date, nullable=False)
-    ended_at:      Mapped[date] = mapped_column(Date, nullable=False)
     created_at:    Mapped[date] = mapped_column(Date, nullable=False, server_default=func.now())
+    ended_at:      Mapped[date] = mapped_column(Date, nullable=True)
 
     #Описываем связи с другими таблицами
     user:       Mapped['User']       = relationship('User',       back_populates='enrollment', uselist=False)
@@ -89,7 +88,7 @@ class Lesson(Base):
     lesson_name: Mapped[str]   = mapped_column(String(50), nullable=False, unique=True)
     lesson_date: Mapped[date]  = mapped_column(Date, nullable=False)
     created_at:  Mapped[date]  = mapped_column(Date, nullable=False, server_default=func.now())
-                    
+
     #Описываем связи с другими таблицами
     course:      Mapped['Course']     = relationship('Course',     back_populates='lesson', uselist=False)
     attendance:  Mapped['Attendance'] = relationship('Attendance', back_populates='lesson', uselist=False)

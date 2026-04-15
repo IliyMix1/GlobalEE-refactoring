@@ -7,6 +7,7 @@ import routes.legacy   as legacy
 import routes.common   as common
 import routes.users    as users
 import routes.courses  as courses
+import routes.enrollments as enrollments
 
 from database import engine
 from models.models import Base
@@ -25,6 +26,7 @@ app.include_router(legacy.legacy_router)
 app.include_router(common.router)
 app.include_router(users.users_router)
 app.include_router(courses.courses_router)
+app.include_router(enrollments.enrollments_router)
 
 #Поднимаем сервер
 if __name__ == '__main__':
