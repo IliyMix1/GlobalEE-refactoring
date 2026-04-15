@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_session, select_data
+from database import get_session, select_all_records, create_record, patch_record
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import UserCreate, UserPatch
+from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch
 
 
 router = APIRouter()
@@ -11,29 +11,6 @@ router = APIRouter()
 async def root():
     return {'message': 'You have entered the main page'}
 
-@router.get('/users')
-async def get_users(session: AsyncSession = Depends(get_session)):
-    #Вызываем асинхронную функцию, чтобы посмотреть всю таблицу
-    return await select_data(model=User, session=session)
-
-@router.post('/users')
-async def create_user(user: UserCreate, session: AsyncSession = Depends(get_session)):
-    new_user = User(**user.model_dump())
-
-    session.add(new_user)
-    await session.commit()
-    await session.refresh(new_user)
-
-    return new_user
-
-@router.patch('/users/{user_id}')
-async def patch_user(user: UserPatch, session: AsyncSession = Depends(get_session)):
-    pass
-
-@router.get('/courses')
-async def get_courses(session: AsyncSession = Depends(get_session)):
-    #Вызываем асинхронную функцию, чтобы посмотреть всю таблицу
-    return await select_data(model=Course, session=session)
 
 @router.get('/enrollments')
 async def get_enrollments(session: AsyncSession = Depends(get_session)):

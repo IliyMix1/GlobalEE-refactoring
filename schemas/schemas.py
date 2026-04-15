@@ -1,5 +1,6 @@
 from typing import Literal
 from pydantic import BaseModel, field_validator, Field
+from datetime import date
 
 #Создаём шаблон класс, для удобства работы со студентом
 class StudentBase(BaseModel):
@@ -65,3 +66,13 @@ class UserCreate(BaseModel):
 class UserPatch(BaseModel):
     hashed_password: str | None = None
     role: Literal['student', 'admin'] | None = None
+
+class CourseCreate(BaseModel):
+    name: str = Field(min_length=2)
+
+class CoursePatch(BaseModel):
+    name: str | None = None
+
+class CourseOut(CourseCreate):
+    course_id: int
+    created_at: date

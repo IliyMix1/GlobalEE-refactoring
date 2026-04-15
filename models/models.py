@@ -10,13 +10,13 @@ class User(Base):
     __tablename__ = 'users'
 
     #Описываем колонки таблицы
-    user_id: Mapped[int]         = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[str]            = mapped_column(Text, nullable=False)
-    created_at: Mapped[date]     = mapped_column(Date, server_default=func.now())
+    user_id:         Mapped[int]  = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    hashed_password: Mapped[str]  = mapped_column(Text, nullable=False)
+    role:            Mapped[str]  = mapped_column(Text, nullable=False)
+    created_at:      Mapped[date] = mapped_column(Date, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    student: Mapped['Student'] = relationship('Student', back_populates='user', uselist=False)
+    student:    Mapped['Student']    = relationship('Student', back_populates='user', uselist=False)
     enrollment: Mapped['Enrollment'] = relationship('Enrollment', back_populates='user', uselist=False)
 
 
@@ -60,8 +60,8 @@ class Enrollment(Base):
     created_at:    Mapped[date] = mapped_column(Date, nullable=False, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    user:   Mapped['User']           = relationship('User',       back_populates='enrollment', uselist=False)
-    course: Mapped['Course']         = relationship('Course',     back_populates='enrollment', uselist=False)
+    user:       Mapped['User']       = relationship('User',       back_populates='enrollment', uselist=False)
+    course:     Mapped['Course']     = relationship('Course',     back_populates='enrollment', uselist=False)
     submission: Mapped['Submission'] = relationship('Submission', back_populates='enrollment', uselist=False)
     attendance: Mapped['Attendance'] = relationship('Attendance', back_populates='enrollment', uselist=False)
 
@@ -89,10 +89,10 @@ class Lesson(Base):
     lesson_name: Mapped[str]   = mapped_column(String(50), nullable=False, unique=True)
     lesson_date: Mapped[date]  = mapped_column(Date, nullable=False)
     created_at:  Mapped[date]  = mapped_column(Date, nullable=False, server_default=func.now())
-
+                    
     #Описываем связи с другими таблицами
-    course:     Mapped['Course']     = relationship('Course',     back_populates='lesson', uselist=False)
-    attendance: Mapped['Attendance'] = relationship('Attendance', back_populates='lesson', uselist=False)
+    course:      Mapped['Course']     = relationship('Course',     back_populates='lesson', uselist=False)
+    attendance:  Mapped['Attendance'] = relationship('Attendance', back_populates='lesson', uselist=False)
 
 class Submission(Base):
     __tablename__ = 'submissions'
@@ -119,4 +119,4 @@ class Attendance(Base):
     
     #Описываем связи с другими таблицами
     enrollment: Mapped['Enrollment'] = relationship('Enrollment', back_populates='attendance', uselist=False)
-    lesson: Mapped['Lesson']     = relationship('Lesson',     back_populates='attendance', uselist=False)
+    lesson:     Mapped['Lesson']     = relationship('Lesson',     back_populates='attendance', uselist=False)

@@ -1,10 +1,6 @@
 #Импортируем библиотеки
 from fastapi  import HTTPException, Query, APIRouter, Depends
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_session, select_data
-from models.models import Student
 
 from typing import Literal
 import logging
@@ -22,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 #Создаём объект класса FastAPI
-students_router = APIRouter(prefix='/students', tags=['students'])
+legacy_router = APIRouter(prefix='/legacy', tags=['legacy'])
 
 def load_students() -> dict:
     '''Читаем файл и возвращаем словарь словарей'''
@@ -67,7 +63,7 @@ def check_for_duplicates(student: dict) -> bool:
             
     return any_duplicates
 
-@students_router.get('/', response_model=list[StudentOut])
+@legacy_router.get('/', response_model=list[StudentOut])
 def get_all_students(
     #Для фильтрации
     grade:   Literal['9', '10', '11'] | None = None,
@@ -104,7 +100,7 @@ def get_all_students(
 
     return students_list
 
-@students_router.get('/{id}', response_model=StudentOut)
+@legacy_router.get('/{id}', response_model=StudentOut)
 def get_student(id: int):
     '''Отображаем конкретного ученика по id'''
     students = load_students()
@@ -115,7 +111,7 @@ def get_student(id: int):
         logger.warning(f'Student not found: id={id}')
         raise HTTPException(status_code=404, detail='Student not found')
 
-@students_router.post('/', response_model=StudentOut, status_code=201)
+@legacy_router.post('/', response_model=StudentOut, status_code=201)
 def create_student(student: StudentCreate):
     '''Добавляем ученика'''
     students = load_students()
@@ -140,7 +136,7 @@ def create_student(student: StudentCreate):
     logger.info(f'Student was added: id={new_id}')
     return students[str(new_id)]
 
-@students_router.delete('/{id}')
+@legacy_router.delete('/{id}')
 def delete_student(id: int) -> dict:
     students = load_students()
 
@@ -156,7 +152,7 @@ def delete_student(id: int) -> dict:
     save_changes(students)
     return {'message': 'Student was deleted'}
 
-@students_router.put('/{id}', response_model=StudentOut)
+@legacy_router.put('/{id}', response_model=StudentOut)
 def put_student_data(id: int, student: StudentPut):
     '''Обновляем всю информацию об ученике'''
     students = load_students()
@@ -182,7 +178,7 @@ def put_student_data(id: int, student: StudentPut):
     logger.info(f'Student data was changed entirely: id={id}')
     return students[str(id)]
 
-@students_router.patch('/{id}', response_model=StudentOut)
+@legacy_router.patch('/{id}', response_model=StudentOut)
 def patch_student_data(id: int, student: StudentPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
