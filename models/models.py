@@ -74,10 +74,12 @@ class Homework(Base):
     max_score:     Mapped[int]   = mapped_column(SmallInteger, nullable=False)
     deadline:      Mapped[date]  = mapped_column(Date, nullable=False)
     created_at:    Mapped[date]  = mapped_column(Date, nullable=False, server_default=func.now())
+    lesson_id:     Mapped[int]   = mapped_column(BigInteger, ForeignKey('lessons.lesson_id', ondelete='CASCADE'), nullable=True)
 
     #Описываем связи с другими таблицами
     course:     Mapped['Course']     = relationship('Course',     back_populates='homework', uselist=False)
     submission: Mapped['Submission'] = relationship('Submission', back_populates='homework', uselist=False)
+    lesson:     Mapped['Lesson']     = relationship('Lesson',     back_populates='homework', uselist=False)
 
 class Lesson(Base):
     __tablename__ = 'lessons'
@@ -92,6 +94,7 @@ class Lesson(Base):
     #Описываем связи с другими таблицами
     course:      Mapped['Course']     = relationship('Course',     back_populates='lesson', uselist=False)
     attendance:  Mapped['Attendance'] = relationship('Attendance', back_populates='lesson', uselist=False)
+    homework:    Mapped['Homework']   = relationship('Homework',   back_populates='lesson', uselist=False)
 
 class Submission(Base):
     __tablename__ = 'submissions'

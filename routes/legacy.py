@@ -63,7 +63,7 @@ def check_for_duplicates(student: dict) -> bool:
             
     return any_duplicates
 
-@legacy_router.get('/', response_model=list[StudentOut])
+@legacy_router.get('/', response_model=list[LegacyOut])
 def get_all_students(
     #Для фильтрации
     grade:   Literal['9', '10', '11'] | None = None,
@@ -100,7 +100,7 @@ def get_all_students(
 
     return students_list
 
-@legacy_router.get('/{id}', response_model=StudentOut)
+@legacy_router.get('/{id}', response_model=LegacyOut)
 def get_student(id: int):
     '''Отображаем конкретного ученика по id'''
     students = load_students()
@@ -111,8 +111,8 @@ def get_student(id: int):
         logger.warning(f'Student not found: id={id}')
         raise HTTPException(status_code=404, detail='Student not found')
 
-@legacy_router.post('/', response_model=StudentOut, status_code=201)
-def create_student(student: StudentCreate):
+@legacy_router.post('/', response_model=LegacyOut, status_code=201)
+def create_student(student: LegacyCreate):
     '''Добавляем ученика'''
     students = load_students()
 
@@ -152,8 +152,8 @@ def delete_student(id: int) -> dict:
     save_changes(students)
     return {'message': 'Student was deleted'}
 
-@legacy_router.put('/{id}', response_model=StudentOut)
-def put_student_data(id: int, student: StudentPut):
+@legacy_router.put('/{id}', response_model=LegacyOut)
+def put_student_data(id: int, student: LegacyPut):
     '''Обновляем всю информацию об ученике'''
     students = load_students()
 
@@ -178,8 +178,8 @@ def put_student_data(id: int, student: StudentPut):
     logger.info(f'Student data was changed entirely: id={id}')
     return students[str(id)]
 
-@legacy_router.patch('/{id}', response_model=StudentOut)
-def patch_student_data(id: int, student: StudentPatch):
+@legacy_router.patch('/{id}', response_model=LegacyOut)
+def patch_student_data(id: int, student: LegacyPatch):
     '''Обновляем часть информации об ученике'''
     students = load_students()
     

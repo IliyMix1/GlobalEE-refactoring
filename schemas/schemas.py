@@ -3,7 +3,7 @@ from pydantic import BaseModel, field_validator, Field
 from datetime import date
 
 #Создаём шаблон класс, для удобства работы со студентом
-class StudentBase(BaseModel):
+class LegacyBase(BaseModel):
     name:   str = Field(min_length=2, max_length=50)
     grade:  Literal[9, 10, 11]
     tariff: Literal['mini', 'standard', 'pro']
@@ -23,19 +23,19 @@ class StudentBase(BaseModel):
         return value
     
 #Вариация класса для работы с выводом
-class StudentOut(StudentBase):
+class LegacyOut(LegacyBase):
     id: int
 
 #Вариация класса для создания студента
-class StudentCreate(StudentBase):
+class LegacyCreate(LegacyBase):
     pass
 
 #Вариация класса для ПОЛНОГО изменения информации о студенте
-class StudentPut(StudentBase):
+class LegacyPut(LegacyBase):
     pass
 
 #Вариация класса для ЧАСТИЧНОГО изменения информации о студенте
-class StudentPatch(BaseModel):
+class LegacyPatch(BaseModel):
     #Наши переменные имеют либо INT/STR тип, либо None, а по умолчанию все они равны None
     name:   str | None = None
     grade:  Literal[9, 10, 11] | None = None
@@ -96,3 +96,5 @@ class EnrollmentOut(EnrollmentCreate):
     enrollment_id: int
     created_at:    date
     ended_at:      date | None
+
+
