@@ -57,7 +57,12 @@ class LegacyPatch(BaseModel):
             if symbol.isdigit():
                 raise ValueError('Name should not contain digits')
         return value
-    
+
+
+class UserAuth(BaseModel):
+    email: str = Field(max_length=320)
+    password: str = Field(min_length=8, max_length=70)
+
 
 class UserCreate(BaseModel):
     hashed_password: str = Field(min_length=2)
