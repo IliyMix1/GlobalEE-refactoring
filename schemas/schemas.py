@@ -59,9 +59,19 @@ class LegacyPatch(BaseModel):
         return value
 
 
-class UserAuth(BaseModel):
-    email: str = Field(max_length=320)
+class Auth(BaseModel):
+    email:    str = Field(max_length=320)
     password: str = Field(min_length=8, max_length=70)
+
+class AuthUserCreate(BaseModel):
+    hashed_password: str 
+    role: Literal['student', 'admin']
+
+class AuthStudentCreate(BaseModel):
+    user_id:    int
+    email:      str = Field(max_length=320)
+    first_name: str = Field(max_length=50)
+    last_name:  str = Field(max_length=50)
 
 
 class UserCreate(BaseModel):

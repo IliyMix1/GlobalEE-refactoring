@@ -1,8 +1,9 @@
-from passlib.context import CryptContext
-from jose import jwt, JWTError 
+#from passlib.context import CryptContext
 from datetime import datetime, timedelta
+from jose     import jwt, JWTError 
+from dotenv   import load_dotenv
+import bcrypt
 import os
-from dotenv import load_dotenv
 
 #Загружаем переменные из .env
 load_dotenv()
@@ -10,13 +11,15 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+#pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 def hash_password(password: str) -> str:  
-    pwd_context.hash(password)
+    #Обрезаем начальную строку, превращаем в байты и добавляем "соль"
+    return bcrypt.hashpw(password[:70].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(password_plain: str, password_hashed: str) -> bool:
-    pwd_context.verify(password_plain, password_hashed)
+    #Убираем "соль" из хэша и сравниваем введённый пароль с тем, что лежит в БД
+    return bcrypt.checkpw(password_plain[:70].encode('utf-8'), password_hashed[:70].encode('utf-8'))
 
 def create_access_token(data: dict) -> str:
     payload = data.copy()
