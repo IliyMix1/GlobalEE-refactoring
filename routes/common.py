@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_session, select_all_records, select_record, select_record_by_email, create_record, patch_record
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import Auth, AuthUserCreate, AuthStudentCreate
+from schemas.schemas import AuthReg, AuthLogin, AuthUserCreate, AuthStudentCreate
 from auth import verify_password, hash_password, create_access_token, get_current_user
 
 
@@ -33,7 +33,7 @@ async def get_attendance(session: AsyncSession = Depends(get_session)):
     return await select_all_records(model=Attendance, session=session)
 
 @router.post('/reg')
-async def registration(schema: Auth, session: AsyncSession = Depends(get_session)):
+async def registration(schema: AuthReg, session: AsyncSession = Depends(get_session)):
     #Ищем запись по введённой почте
     same_student = await select_record_by_email(email=schema.email, model=Student, session=session)
 
@@ -56,8 +56,8 @@ async def registration(schema: Auth, session: AsyncSession = Depends(get_session
     student_data = AuthStudentCreate(
         user_id=user.user_id,
         email=schema.email,
-        first_name='Jane',
-        last_name='Doe'
+        first_name=schema.first_name,
+        last_name=schema.last_name
     )
     #Отправляем данные
     await create_record(model=Student, schema=student_data, session=session)
@@ -65,7 +65,7 @@ async def registration(schema: Auth, session: AsyncSession = Depends(get_session
     return {'message': 'New account successfully created'}
 
 @router.post('/login')
-async def login(schema: Auth, session: AsyncSession = Depends(get_session)):
+async def login(schema: AuthLogin, session: AsyncSession = Depends(get_session)):
     #Ищем запись по введённой почте
     same_student = await select_record_by_email(email=schema.email, model=Student, session=session)
 

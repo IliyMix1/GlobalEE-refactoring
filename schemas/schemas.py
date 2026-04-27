@@ -59,7 +59,13 @@ class LegacyPatch(BaseModel):
         return value
 
 
-class Auth(BaseModel):
+class AuthReg(BaseModel):
+    first_name: str = Field(max_length=50)
+    last_name:  str = Field(max_length=50)
+    email:    str = Field(max_length=320)
+    password: str = Field(min_length=8, max_length=70)
+
+class AuthLogin(BaseModel):
     email:    str = Field(max_length=320)
     password: str = Field(min_length=8, max_length=70)
 
