@@ -28,11 +28,6 @@ async def select_record(id, model, session: AsyncSession):
     '''Отображаем конкретную запись из таблицы по id'''
     #Получаем запись из БД по id(primary key)
     record = await session.get(model, id)
-
-    #Проверяем существует ли такая запись
-    #if record is None:
-    #    return None
-    
     return record
 
 async def select_record_by_email(email: str, model, session: AsyncSession):

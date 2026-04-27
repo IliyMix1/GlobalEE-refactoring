@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_session, select_all_records, select_record, select_record_by_email, create_record, patch_record
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch, Auth, AuthUserCreate, AuthStudentCreate
-from auth import verify_password, hash_password
+from schemas.schemas import Auth, AuthUserCreate, AuthStudentCreate
+from auth import verify_password, hash_password, create_access_token, get_current_user
 
 
 router = APIRouter()
 
 @router.get('/')
-async def root():
+async def root(current_user = Depends(get_current_user)):
     return {'message': 'You have entered the main page'}
 
 @router.get('/studentsss')
@@ -73,12 +73,18 @@ async def login(schema: Auth, session: AsyncSession = Depends(get_session)):
     if same_student is None:
         raise HTTPException(status_code=401, detail='Account with this email does not exists')
     
+    #Ищем запись по id и сразу сохраняем объект для дальнейшей работы
     user = await select_record(id=same_student.user_id, model=User, session=session)
 
+    #Сравниваем хэш введённого пароля с хэшем из БД
     is_verified = verify_password(password_plain=schema.password, password_hashed=user.hashed_password)
+
     if is_verified:
-        return {'message': "You've entered successfully"}
+        #Создаём JWT токен
+        token = create_access_token({'sub': str(user.user_id), 'role': user.role})
+        return {"access_token": token, "token_type": "bearer"}
     else:
         raise HTTPException(status_code=401, detail='Password is wrong')
+    
 
     
