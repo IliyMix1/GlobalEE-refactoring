@@ -26,7 +26,7 @@ app.include_router(legacy.legacy_router)
 app.include_router(common.router)
 app.include_router(users.users_router)
 app.include_router(courses.courses_router)
-app.include_router(enrollments.enrollments_router)
+#app.include_router(enrollments.enrollments_router)
 
 #Поднимаем сервер
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_session, select_all_records, select_record, select_record_by_email, create_record, patch_record
+from database import get_session, select_all_records, select_record, select_record_by_email, select_record_by_user_id_course_id, create_record, patch_record
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import AuthReg, AuthLogin, AuthUserCreate, AuthStudentCreate
+from schemas.schemas import AuthReg, AuthLogin, AuthUserCreate, AuthStudentCreate, EnrollmentCreate, EnrollmentBuy
 from auth import verify_password, hash_password, create_access_token, get_current_user
 
 
@@ -87,4 +87,24 @@ async def login(schema: AuthLogin, session: AsyncSession = Depends(get_session))
         raise HTTPException(status_code=401, detail='Password is wrong')
     
 
+@router.post('/courses/{course_id}')
+async def buy_course(course_id: int, schema: EnrollmentBuy, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
+    #Проверяем существует ли желаемый курс
+    course = await select_record(id=course_id, model=Course, session=session)
+    if course is None:
+        raise HTTPException(status_code=404, detail='Course not found')
     
+    #Проверяем, покупал ли уже человек этот курс раньше
+    record = await select_record_by_user_id_course_id(user_id=user.user_id, course_id=course_id, model=Enrollment, session=session)
+    if record is not None:
+        raise HTTPException(status_code=409, detail='Course is already owned')
+
+    #Собираем данные, чтобы сделать запись в БД
+    data = EnrollmentCreate(
+        user_id=user.user_id,
+        course_id=course_id,
+        tariff=schema.tariff,
+        status='active',
+    )
+
+    return await create_record(model=Enrollment, schema=data, session=session)

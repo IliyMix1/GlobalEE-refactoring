@@ -25,9 +25,20 @@ async def select_all_records(model, session: AsyncSession):
     return record.scalars().all()
 
 async def select_record(id, model, session: AsyncSession):
-    '''Отображаем конкретную запись из таблицы по id'''
+    '''Отображаем конкретную запись из таблицы по id(PRIMARY KEY)'''
     #Получаем запись из БД по id(primary key)
     record = await session.get(model, id)
+    return record
+
+async def select_record_by_user_id_course_id(user_id: int, course_id: int, model, session: AsyncSession):
+    '''Отображаем конкретную запись из таблицы по user_id'''
+    #Формируем "чертёж" запроса
+    query = select(model).where(model.user_id == user_id, model.course_id == course_id)
+    #Отправляем запрос в базу получаем результат
+    result = await session.execute(query)
+
+    record = result.scalar_one_or_none()
+
     return record
 
 async def select_record_by_email(email: str, model, session: AsyncSession):

@@ -100,6 +100,9 @@ class CourseOut(CourseCreate):
     created_at: date
 
 
+class EnrollmentBuy(BaseModel):
+    tariff:     Literal['mini', 'standard', 'pro']
+
 class EnrollmentCreate(BaseModel):
     user_id:    int
     course_id:  int

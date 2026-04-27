@@ -47,4 +47,4 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except JWTError:
         raise HTTPException(status_code=401, detail='Invalid token')
 
-    return await select_record(id=user_id, model=User, session=session)
+    return await select_record(id=int(user_id), model=User, session=session)
