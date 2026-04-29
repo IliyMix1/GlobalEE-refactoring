@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_session, select_all_records, select_record, create_record, patch_record
+from sqlalchemy import select
+from database import get_session, select_all_records, select_record, create_record #, select_record_by_user_id_course_id
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch, CourseOut
+from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch, CourseOut, EnrollmentBuy, EnrollmentCreate
+from auth import get_current_user
 
 
 courses_router = APIRouter(prefix='/courses', tags=['Courses'])
@@ -27,12 +29,34 @@ async def get_course(course_id: int, session: AsyncSession = Depends(get_session
 async def create_course(course: CourseCreate, session: AsyncSession = Depends(get_session)):
     return await create_record(schema=course, model=Course, session=session)
 
+@courses_router.post('/{course_id}')
+async def buy_course(course_id: int, schema: EnrollmentBuy, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
+    #Проверяем существует ли желаемый курс
+    #course = await select_record(id=course_id, model=Course, session=session)
+    result = await session.execute(
+        select(Course).where(Course.course_id == course_id)
+    )
+    course = result.scalar_one_or_none()
 
-@courses_router.patch('/{course_id}', response_model=CourseOut)
-async def patch_course(course_id: int, course: CoursePatch, session: AsyncSession = Depends(get_session)):
-    record = await patch_record(id=course_id, schema=course, model=Course, session=session)
-
-    if record is None:
-        raise HTTPException(status_code=404, detail='Record not found')
+    if course is None:
+        raise HTTPException(status_code=404, detail='Course not found')
     
-    return record
+    #Проверяем, покупал ли уже человек этот курс раньше
+    #record = await select_record_by_user_id_course_id(user_id=user.user_id, course_id=course_id, model=Enrollment, session=session)
+    result = await session.execute(
+        select(Enrollment).where(Enrollment.user_id == user.user_id, Enrollment.course_id == course_id)
+    )
+    record = result.scalar_one_or_none()
+
+    if record is not None:
+        raise HTTPException(status_code=409, detail='Course is already owned')
+
+    #Собираем данные, чтобы сделать запись в БД
+    data = EnrollmentCreate(
+        user_id=user.user_id,
+        course_id=course_id,
+        tariff=schema.tariff,
+        status='active',
+    )
+
+    return await create_record(model=Enrollment, schema=data, session=session)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_session, select_all_records, select_record, select_record_by_email, select_record_by_user_id_course_id, create_record, patch_record
+from sqlalchemy import select
+from database import get_session, select_all_records, select_record, create_record, patch_record
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
 from schemas.schemas import AuthReg, AuthLogin, AuthUserCreate, AuthStudentCreate, EnrollmentCreate, EnrollmentBuy
 from auth import verify_password, hash_password, create_access_token, get_current_user
@@ -35,7 +36,11 @@ async def get_attendance(session: AsyncSession = Depends(get_session)):
 @router.post('/reg')
 async def registration(schema: AuthReg, session: AsyncSession = Depends(get_session)):
     #Ищем запись по введённой почте
-    same_student = await select_record_by_email(email=schema.email, model=Student, session=session)
+    #same_student = await select_record_by_email(email=schema.email, model=Student, session=session)
+    result = await session.execute(
+        select(Student).where(Student.email == schema.email)
+    )
+    same_student = result.scalar_one_or_none()
 
     #Проверяем, есть ли уже аккаунт с такой почтой
     if same_student is not None:
@@ -67,7 +72,11 @@ async def registration(schema: AuthReg, session: AsyncSession = Depends(get_sess
 @router.post('/login')
 async def login(schema: AuthLogin, session: AsyncSession = Depends(get_session)):
     #Ищем запись по введённой почте
-    same_student = await select_record_by_email(email=schema.email, model=Student, session=session)
+    #same_student = await select_record_by_email(email=schema.email, model=Student, session=session)
+    result = await session.execute(
+        select(Student).where(Student.email == schema.email)
+    )
+    same_student = result.scalar_one_or_none()
 
     #Проверяем, есть ли уже аккаунт с такой почтой
     if same_student is None:
@@ -85,26 +94,10 @@ async def login(schema: AuthLogin, session: AsyncSession = Depends(get_session))
         return {"access_token": token, "token_type": "bearer"}
     else:
         raise HTTPException(status_code=401, detail='Password is wrong')
-    
 
-@router.post('/courses/{course_id}')
-async def buy_course(course_id: int, schema: EnrollmentBuy, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
-    #Проверяем существует ли желаемый курс
-    course = await select_record(id=course_id, model=Course, session=session)
-    if course is None:
-        raise HTTPException(status_code=404, detail='Course not found')
-    
-    #Проверяем, покупал ли уже человек этот курс раньше
-    record = await select_record_by_user_id_course_id(user_id=user.user_id, course_id=course_id, model=Enrollment, session=session)
-    if record is not None:
-        raise HTTPException(status_code=409, detail='Course is already owned')
-
-    #Собираем данные, чтобы сделать запись в БД
-    data = EnrollmentCreate(
-        user_id=user.user_id,
-        course_id=course_id,
-        tariff=schema.tariff,
-        status='active',
-    )
-
-    return await create_record(model=Enrollment, schema=data, session=session)
+@router.get('/enrollments')
+async def get_owned_courses(session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
+    result = await session.execute(
+        select(Enrollment).where(Enrollment.user_id == user.user_id)
+        )
+    return result.scalars().all()
