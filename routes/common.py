@@ -4,8 +4,8 @@ from sqlalchemy import select
 from database import get_session, select_all_records, select_record, create_record, patch_record
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
 from schemas.schemas import AuthReg, AuthLogin, AuthUserCreate, AuthStudentCreate, EnrollmentCreate, EnrollmentBuy
-from auth import verify_password, hash_password, create_access_token, get_current_user
-
+from auth import verify_password, hash_password, create_access_token
+from dependencies import get_current_user, get_enrollment
 
 router = APIRouter()
 
@@ -13,25 +13,45 @@ router = APIRouter()
 async def root(current_user = Depends(get_current_user)):
     return {'message': 'You have entered the main page'}
 
-@router.get('/studentsss')
-async def get_students(session: AsyncSession = Depends(get_session)):
-    return await select_all_records(model=Student, session=session)
+# @router.get('/studentsss')
+# async def get_students(session: AsyncSession = Depends(get_session)):
+#     return await select_all_records(model=Student, session=session)
 
 @router.get('/homeworks')
 async def get_homeworks(session: AsyncSession = Depends(get_session)):
     return await select_all_records(model=Homework, session=session)
 
+@router.get('/{course_id}/homeworks')
+async def get_homeworks_by_course(course_id: int, user = Depends(get_current_user), enrollment = Depends(get_enrollment), session: AsyncSession = Depends(get_session)):
+    #Ищем записи в БД по id курса
+    result = await session.execute(
+        select(Homework).where(Homework.course_id == course_id)
+    )
+    homeworks = result.scalars().all()
+
+    return homeworks
+
 @router.get('/lessons')
 async def get_lessons(session: AsyncSession = Depends(get_session)):
     return await select_all_records(model=Lesson, session=session)
 
-@router.get('/submissions')
-async def get_submissions(session: AsyncSession = Depends(get_session)):
-    return await select_all_records(model=Submission, session=session)
+@router.get('/{course_id}/lessons')
+async def get_lessons_by_course(course_id: int, user = Depends(get_current_user), enrollment = Depends(get_enrollment), session: AsyncSession = Depends(get_session)):
+    #Ищем записи в БД по id курса
+    result = await session.execute(
+        select(Lesson).where(Lesson.course_id == course_id)
+    )
+    lessons = result.scalars().all()
 
-@router.get('/attendance')
-async def get_attendance(session: AsyncSession = Depends(get_session)):
-    return await select_all_records(model=Attendance, session=session)
+    return lessons
+
+# @router.get('/submissions')
+# async def get_submissions(session: AsyncSession = Depends(get_session)):
+#     return await select_all_records(model=Submission, session=session)
+
+# @router.get('/attendance')
+# async def get_attendance(session: AsyncSession = Depends(get_session)):
+#     return await select_all_records(model=Attendance, session=session)
 
 @router.post('/reg')
 async def registration(schema: AuthReg, session: AsyncSession = Depends(get_session)):

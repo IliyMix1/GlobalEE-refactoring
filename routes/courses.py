@@ -4,7 +4,7 @@ from sqlalchemy import select
 from database import get_session, select_all_records, select_record, create_record #, select_record_by_user_id_course_id
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
 from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch, CourseOut, EnrollmentBuy, EnrollmentCreate
-from auth import get_current_user
+from dependencies import get_current_user
 
 
 courses_router = APIRouter(prefix='/courses', tags=['Courses'])
