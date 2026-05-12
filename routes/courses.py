@@ -4,7 +4,7 @@ from sqlalchemy import select
 from database import get_session, select_all_records, select_record, create_record #, select_record_by_user_id_course_id
 from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
 from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch, CourseOut, EnrollmentBuy, EnrollmentCreate
-from dependencies import get_current_user
+from dependencies import get_current_user, check_role
 
 
 courses_router = APIRouter(prefix='/courses', tags=['Courses'])
@@ -26,7 +26,7 @@ async def get_course(course_id: int, session: AsyncSession = Depends(get_session
     return record
 
 @courses_router.post('/', response_model=CourseOut)
-async def create_course(course: CourseCreate, session: AsyncSession = Depends(get_session)):
+async def create_course(course: CourseCreate, session: AsyncSession = Depends(get_session), user = Depends(get_current_user), role = Depends(check_role)):
     return await create_record(schema=course, model=Course, session=session)
 
 @courses_router.post('/{course_id}')

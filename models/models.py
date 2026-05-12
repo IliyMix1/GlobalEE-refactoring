@@ -59,10 +59,10 @@ class Enrollment(Base):
     ended_at:      Mapped[date] = mapped_column(Date, nullable=True)
 
     #Описываем связи с другими таблицами
-    user:       Mapped['User']       = relationship('User',       back_populates='enrollment', uselist=False)
-    course:     Mapped['Course']     = relationship('Course',     back_populates='enrollment', uselist=False)
-    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='enrollment')
-    attendance: Mapped[list['Attendance']] = relationship('Attendance', back_populates='enrollment')
+    user:       Mapped['User']       = relationship('User',       back_populates='enrollments', uselist=False)
+    course:     Mapped['Course']     = relationship('Course',     back_populates='enrollments', uselist=False)
+    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='enrollments')
+    attendance: Mapped[list['Attendance']] = relationship('Attendance', back_populates='enrollments')
 
 class Homework(Base):
     __tablename__ = 'homeworks'
@@ -77,9 +77,9 @@ class Homework(Base):
     lesson_id:     Mapped[int]   = mapped_column(BigInteger, ForeignKey('lessons.lesson_id', ondelete='CASCADE'), nullable=True)
 
     #Описываем связи с другими таблицами
-    course:     Mapped['Course']     = relationship('Course',     back_populates='homework', uselist=False)
-    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='homework')
-    lesson:     Mapped['Lesson']     = relationship('Lesson',     back_populates='homework', uselist=False)
+    course:     Mapped['Course']     = relationship('Course',     back_populates='homeworks', uselist=False)
+    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='homeworks')
+    lessons:     Mapped['Lesson']     = relationship('Lesson',     back_populates='homeworks', uselist=False)
 
 class Lesson(Base):
     __tablename__ = 'lessons'
@@ -92,9 +92,9 @@ class Lesson(Base):
     created_at:  Mapped[date]  = mapped_column(Date, nullable=False, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    course:      Mapped['Course']     = relationship('Course',     back_populates='lesson', uselist=False)
-    attendance:  Mapped[list['Attendance']] = relationship('Attendance', back_populates='lesson')
-    homework:    Mapped['Homework']   = relationship('Homework',   back_populates='lesson', uselist=False)
+    course:      Mapped['Course']     = relationship('Course',     back_populates='lessons', uselist=False)
+    attendance:  Mapped[list['Attendance']] = relationship('Attendance', back_populates='lessons')
+    homeworks:    Mapped['Homework']   = relationship('Homework',   back_populates='lessons', uselist=False)
 
 class Submission(Base):
     __tablename__ = 'submissions'
@@ -107,8 +107,8 @@ class Submission(Base):
     submission_date: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    enrollment: Mapped['Enrollment'] = relationship('Enrollment', back_populates='submission', uselist=False)
-    homework:   Mapped['Homework']   = relationship('Homework', back_populates='submission', uselist=False)
+    enrollments: Mapped['Enrollment'] = relationship('Enrollment', back_populates='submission', uselist=False)
+    homeworks:   Mapped['Homework']   = relationship('Homework', back_populates='submission', uselist=False)
 
 class Attendance(Base):
     __tablename__ = 'attendance'
@@ -120,5 +120,5 @@ class Attendance(Base):
     attendance_date: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     
     #Описываем связи с другими таблицами
-    enrollment: Mapped['Enrollment'] = relationship('Enrollment', back_populates='attendance', uselist=False)
-    lesson:     Mapped['Lesson']     = relationship('Lesson',     back_populates='attendance', uselist=False)
+    enrollments: Mapped['Enrollment'] = relationship('Enrollment', back_populates='attendance', uselist=False)
+    lessons:     Mapped['Lesson']     = relationship('Lesson',     back_populates='attendance', uselist=False)
