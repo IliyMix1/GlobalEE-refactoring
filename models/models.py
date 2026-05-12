@@ -17,7 +17,7 @@ class User(Base):
 
     #Описываем связи с другими таблицами
     student:    Mapped['Student']    = relationship('Student', back_populates='user', uselist=False)
-    enrollment: Mapped['Enrollment'] = relationship('Enrollment', back_populates='user', uselist=False)
+    enrollments: Mapped[list['Enrollment']] = relationship('Enrollment', back_populates='user')
 
 
 class Student(Base):
@@ -42,9 +42,9 @@ class Course(Base):
     created_at: Mapped[date] = mapped_column(Date, nullable=False, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    enrollment: Mapped['Enrollment'] = relationship('Enrollment', back_populates='course', uselist=False)
-    homework:   Mapped['Homework']   = relationship('Homework',   back_populates='course', uselist=False)
-    lesson:     Mapped['Lesson']     = relationship('Lesson',     back_populates='course', uselist=False)
+    enrollments: Mapped[list['Enrollment']] = relationship('Enrollment', back_populates='course')
+    homeworks:   Mapped[list['Homework'] ]  = relationship('Homework',   back_populates='course')
+    lessons:     Mapped[list['Lesson']  ]   = relationship('Lesson',     back_populates='course')
 
 class Enrollment(Base):
     __tablename__ = 'enrollments'
@@ -61,8 +61,8 @@ class Enrollment(Base):
     #Описываем связи с другими таблицами
     user:       Mapped['User']       = relationship('User',       back_populates='enrollment', uselist=False)
     course:     Mapped['Course']     = relationship('Course',     back_populates='enrollment', uselist=False)
-    submission: Mapped['Submission'] = relationship('Submission', back_populates='enrollment', uselist=False)
-    attendance: Mapped['Attendance'] = relationship('Attendance', back_populates='enrollment', uselist=False)
+    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='enrollment')
+    attendance: Mapped[list['Attendance']] = relationship('Attendance', back_populates='enrollment')
 
 class Homework(Base):
     __tablename__ = 'homeworks'
@@ -78,7 +78,7 @@ class Homework(Base):
 
     #Описываем связи с другими таблицами
     course:     Mapped['Course']     = relationship('Course',     back_populates='homework', uselist=False)
-    submission: Mapped['Submission'] = relationship('Submission', back_populates='homework', uselist=False)
+    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='homework')
     lesson:     Mapped['Lesson']     = relationship('Lesson',     back_populates='homework', uselist=False)
 
 class Lesson(Base):
@@ -93,7 +93,7 @@ class Lesson(Base):
 
     #Описываем связи с другими таблицами
     course:      Mapped['Course']     = relationship('Course',     back_populates='lesson', uselist=False)
-    attendance:  Mapped['Attendance'] = relationship('Attendance', back_populates='lesson', uselist=False)
+    attendance:  Mapped[list['Attendance']] = relationship('Attendance', back_populates='lesson')
     homework:    Mapped['Homework']   = relationship('Homework',   back_populates='lesson', uselist=False)
 
 class Submission(Base):

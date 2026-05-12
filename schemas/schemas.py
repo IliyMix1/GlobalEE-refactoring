@@ -112,7 +112,7 @@ class EnrollmentCreate(BaseModel):
 class EnrollmentPatch(BaseModel):
     user_id:   int  | None = None
     course_id: int  | None = None
-    tariff:    Literal['mini', 'stabdard', 'pro']    | None = None
+    tariff:    Literal['mini', 'standard', 'pro']    | None = None
     status:    Literal['quit', 'active', 'finished'] | None = None
     ended_at:  date | None = None
 

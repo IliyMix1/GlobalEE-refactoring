@@ -85,7 +85,7 @@ async def get_lesson(lesson_id: int, session: AsyncSession = Depends(get_session
     
     return lesson
 
-@router.get('/lessons/{lesson_id}/attend', tags=['Lessons'])
+@router.post('/lessons/{lesson_id}/attend', tags=['Lessons'])
 async def attend_lesson(lesson_id: int, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
     #Проверяем есть ли такой урок
     result = await session.execute(
@@ -105,12 +105,6 @@ async def attend_lesson(lesson_id: int, session: AsyncSession = Depends(get_sess
 
     return await create_record(model=Attendance, schema=attendance_data, session=session)
 
-
-
-
-# @router.get('/submissions')
-# async def get_submissions(session: AsyncSession = Depends(get_session)):
-#     return await select_all_records(model=Submission, session=session)
 
 @router.get('/{enrollment_id}/submissions')
 async def get_submissions_by_enrollment(enrollment_id: int, user = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
@@ -222,54 +216,3 @@ async def get_owned_courses(session: AsyncSession = Depends(get_session), user =
         select(Enrollment).where(Enrollment.user_id == user.user_id)
         )
     return result.scalars().all()
-
-
-# @router.get('/homeworks/{homework_id}', tags=['Homeworks'])
-# async def get_homework(homework_id: int, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
-#     #Проверяем есть ли такая домашка в БД
-#     result = await session.execute(
-#         select(Homework).where(Homework.homework_id == homework_id)
-#     )
-#     homework = result.scalar_one_or_none()
-
-#     if homework is None:
-#         raise HTTPException(status_code=404, detail='Not found')
-    
-#     #Проверяем достаточно ли у пользователя прав, чтобы посмотреть эту домашку
-#     result = await session.execute(
-#         select(Enrollment).where(Enrollment.course_id == homework.course_id, Enrollment.user_id == user.user_id)
-#     )
-#     enrollment = result.scalar_one_or_none()
-
-#     if enrollment is None:
-#         raise HTTPException(status_code=403, detail='Course is not owned')
-
-#     return homework
-
-# @router.post('/homeworks/{homework_id}/submit', tags=['Homeworks'])
-# async def submit_homework(homework_id: int, score: int, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
-#     #Проверяем есть ли такая домашка в БД
-#     result = await session.execute(
-#         select(Homework).where(Homework.homework_id == homework_id)
-#     )
-#     homework = result.scalar_one_or_none()
-
-#     if homework is None:
-#         raise HTTPException(status_code=404, detail='Not found')
-    
-#     #Проверяем достаточно ли у пользователя прав, чтобы посмотреть эту домашку
-#     result = await session.execute(
-#         select(Enrollment).where(Enrollment.course_id == homework.course_id, Enrollment.user_id == user.user_id)
-#     )
-#     enrollment = result.scalar_one_or_none()
-
-#     if enrollment is None:
-#         raise HTTPException(status_code=403, detail='Course is not owned')
-    
-#     submission_data = SubmissionHomework(
-#         enrollment_id=enrollment.enrollment_id,
-#         homework_id=homework_id,
-#         score=score,
-#     )
-
-#     return await create_record(model=Submission, schema=submission_data, session=session)
