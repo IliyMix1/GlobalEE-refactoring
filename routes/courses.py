@@ -29,7 +29,7 @@ async def get_course(course_id: int, session: AsyncSession = Depends(get_session
     return record
 
 
-@courses_router.post('/my/enrollments/{course_id}')
+@courses_router.post('/courses/{course_id}/buy')
 async def buy_course(course_id: int, schema: EnrollmentBuy, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
     #Проверяем существует ли желаемый курс
     result = await session.execute(

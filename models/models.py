@@ -16,7 +16,7 @@ class User(Base):
     created_at:      Mapped[date] = mapped_column(Date, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    student:    Mapped['Student']    = relationship('Student', back_populates='user', uselist=False)
+    student:     Mapped['Student']    = relationship('Student', back_populates='user', uselist=False)
     enrollments: Mapped[list['Enrollment']] = relationship('Enrollment', back_populates='user')
 
 
@@ -77,9 +77,10 @@ class Homework(Base):
     lesson_id:     Mapped[int]   = mapped_column(BigInteger, ForeignKey('lessons.lesson_id', ondelete='CASCADE'), nullable=True)
 
     #Описываем связи с другими таблицами
-    course:     Mapped['Course']     = relationship('Course',     back_populates='homeworks', uselist=False)
-    submission: Mapped[list['Submission']] = relationship('Submission', back_populates='homeworks')
-    lessons:     Mapped['Lesson']     = relationship('Lesson',     back_populates='homeworks', uselist=False)
+    course:         Mapped['Course']             = relationship('Course',       back_populates='homeworks', uselist=False)
+    submission:     Mapped[list['Submission']]   = relationship('Submission',   back_populates='homeworks')
+    lessons:        Mapped['Lesson']             = relationship('Lesson',       back_populates='homeworks', uselist=False)
+    homework_tasks: Mapped[list['HomeworkTask']] = relationship('HomeworkTask', back_populates='homework')
 
 class Lesson(Base):
     __tablename__ = 'lessons'
@@ -92,9 +93,9 @@ class Lesson(Base):
     created_at:  Mapped[date]  = mapped_column(Date, nullable=False, server_default=func.now())
 
     #Описываем связи с другими таблицами
-    course:      Mapped['Course']     = relationship('Course',     back_populates='lessons', uselist=False)
+    course:      Mapped['Course']           = relationship('Course',     back_populates='lessons', uselist=False)
     attendance:  Mapped[list['Attendance']] = relationship('Attendance', back_populates='lessons')
-    homeworks:    Mapped['Homework']   = relationship('Homework',   back_populates='lessons', uselist=False)
+    homeworks:   Mapped['Homework']         = relationship('Homework',   back_populates='lessons', uselist=False)
 
 class Submission(Base):
     __tablename__ = 'submissions'
@@ -122,3 +123,22 @@ class Attendance(Base):
     #Описываем связи с другими таблицами
     enrollments: Mapped['Enrollment'] = relationship('Enrollment', back_populates='attendance', uselist=False)
     lessons:     Mapped['Lesson']     = relationship('Lesson',     back_populates='attendance', uselist=False)
+
+class Task(Base):
+    __tablename__ = 'tasks'
+
+    task_id:        Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    task_text:      Mapped[str] = mapped_column(Text, nullable=False)
+    correct_answer: Mapped[str] = mapped_column(Text, nullable=False)
+    points:         Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
+
+    homework_tasks: Mapped['HomeworkTask'] = relationship('HomeworkTask', back_populates='task')
+
+class HomeworkTask(Base):
+    __tablename__ = 'homework_tasks'
+
+    homework_id:    Mapped[int] = mapped_column(BigInteger, ForeignKey('homeworks.homework_id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    task_id:        Mapped[int] = mapped_column(BigInteger, ForeignKey('tasks.task_id',         ondelete='CASCADE'), nullable=False, primary_key=True)
+
+    homework: Mapped['Homework'] = relationship('Homework', back_populates='homework_tasks')
+    task:     Mapped['Task']     = relationship('Task',     back_populates='homework_tasks')
