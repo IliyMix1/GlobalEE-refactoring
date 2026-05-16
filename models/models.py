@@ -127,18 +127,22 @@ class Attendance(Base):
 class Task(Base):
     __tablename__ = 'tasks'
 
+    #Описываем колонки таблицы
     task_id:        Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     task_text:      Mapped[str] = mapped_column(Text, nullable=False)
     correct_answer: Mapped[str] = mapped_column(Text, nullable=False)
     points:         Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
 
+    #Описываем связи с другими таблицами
     homework_tasks: Mapped['HomeworkTask'] = relationship('HomeworkTask', back_populates='task')
 
 class HomeworkTask(Base):
     __tablename__ = 'homework_tasks'
 
+    #Описываем колонки таблицы
     homework_id:    Mapped[int] = mapped_column(BigInteger, ForeignKey('homeworks.homework_id', ondelete='CASCADE'), nullable=False, primary_key=True)
     task_id:        Mapped[int] = mapped_column(BigInteger, ForeignKey('tasks.task_id',         ondelete='CASCADE'), nullable=False, primary_key=True)
 
+    #Описываем связи с другими таблицами
     homework: Mapped['Homework'] = relationship('Homework', back_populates='homework_tasks')
     task:     Mapped['Task']     = relationship('Task',     back_populates='homework_tasks')
