@@ -1,13 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+#Для эндпоинтов
+from fastapi                import APIRouter, Depends, HTTPException
+from schemas.schemas        import EnrollmentCreate, EnrollmentPatch, EnrollmentOut
+#Для интеграции с PostgreSQL
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from database import get_session, select_all_records, select_record, create_record, patch_record
-from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import EnrollmentCreate, EnrollmentPatch, EnrollmentOut
-from dependencies import get_current_admin
+from sqlalchemy             import select
+from database               import get_session, select_all_records, select_record, create_record, patch_record
+from models.models          import User, Course, Enrollment
+#Зависимости
+from dependencies           import get_current_user, get_current_admin
+
 
 router = APIRouter(tags=['Enrollments'])
 
+@router.get('/my/enrollments', tags=['Courses'])
+async def get_owned_courses(session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
+    result = await session.execute(
+        select(Enrollment).where(Enrollment.user_id == user.user_id)
+        )
+    return result.scalars().all()
 
 @router.get('/admin/enrollments', response_model=list[EnrollmentOut])
 async def get_all_enrollments(session: AsyncSession = Depends(get_session), admin = Depends(get_current_admin)):
@@ -59,15 +69,6 @@ async def create_enrollment(enrollment_data: EnrollmentCreate, session: AsyncSes
 
 @router.patch('/admin/enrollments/{enrollment_id}')
 async def patch_enrollment(enrollment_id: int, enrollment_data: EnrollmentPatch, session: AsyncSession = Depends(get_session), admin = Depends(get_current_admin)):
-    #Проверяем существует ли уже такой enrollment
-    # result = await session.execute(
-    #     select(Enrollment).where(Enrollment.enrollment_id == enrollment_id)
-    # )
-    # enrollment = result.scalar_one_or_none()
-
-    # if enrollment is None:
-    #     raise HTTPException(status_code=404, detail='Enrollment not found')
-    
     record = await patch_record(id=enrollment_id, model=Enrollment, schema=enrollment_data, session=session)
     if record is None:
         raise HTTPException(status_code=404, detail='Enrollment not found')

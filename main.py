@@ -33,7 +33,7 @@ app.include_router(progress.my_router)
 app.include_router(lessons.my_router)
 app.include_router(homeworks.my_router)
 
-app.include_router(common.router)
+#.include_router(common.router)
 app.include_router(users.users_router)
 app.include_router(courses.courses_router)
 

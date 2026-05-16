@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+#Для эндпоинтов
+from fastapi                import APIRouter, Depends, HTTPException
+from schemas.schemas        import UserPatch
+#Для интеграции с PostgreSQL
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_session, select_all_records, create_record, patch_record
-from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import UserCreate, UserPatch
-from dependencies import get_current_user, get_current_admin
+from database               import get_session, select_all_records, patch_record
+from models.models          import User
+#Зависимости
+from dependencies           import get_current_admin
+
 
 users_router = APIRouter(prefix='/admin/users', tags=['Users'])
 

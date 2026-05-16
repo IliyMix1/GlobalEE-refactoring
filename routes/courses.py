@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+#Для эндпоинтов
+from fastapi                import APIRouter, Depends, HTTPException
+from schemas.schemas        import CourseCreate, CoursePatch, CourseOut, EnrollmentBuy, EnrollmentCreate
+#Для интеграции с PostgreSQL
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from database import get_session, select_all_records, select_record, create_record, patch_record
-from models.models import User, Student, Course, Enrollment, Homework, Lesson, Submission, Attendance
-from schemas.schemas import UserCreate, UserPatch, CourseCreate, CoursePatch, CourseOut, EnrollmentBuy, EnrollmentCreate
-from dependencies import get_current_user, get_current_admin
+from sqlalchemy             import select
+from database               import get_session, select_all_records, select_record, create_record, patch_record
+from models.models          import Course, Enrollment
+#Зависимости
+from dependencies           import get_current_user, get_current_admin
 
 
 courses_router = APIRouter(tags=['Courses'])
@@ -26,10 +29,9 @@ async def get_course(course_id: int, session: AsyncSession = Depends(get_session
     return record
 
 
-@courses_router.post('/courses/{course_id}')
+@courses_router.post('/my/enrollments/{course_id}')
 async def buy_course(course_id: int, schema: EnrollmentBuy, session: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
     #Проверяем существует ли желаемый курс
-    #course = await select_record(id=course_id, model=Course, session=session)
     result = await session.execute(
         select(Course).where(Course.course_id == course_id)
     )
